@@ -1,47 +1,20 @@
-import { useState, type Dispatch, type SetStateAction } from 'react'
-import {
-  sampleAreas,
-  sampleHours,
-  sampleServices,
-} from '../sample/data'
-import type { SampleHours, SampleToggle } from '../sample/types'
+import { useOperations } from '../state/OperationsProvider'
 import { Notice } from '../components/Notice'
 import { SectionIntro } from '../components/SectionIntro'
 import { SwitchRow } from '../components/SwitchRow'
 
 export function SettingsView() {
-  const [hours, setHours] = useState<SampleHours[]>(sampleHours)
-  const [services, setServices] = useState<SampleToggle[]>(sampleServices)
-  const [areas, setAreas] = useState<SampleToggle[]>(sampleAreas)
-
-  function toggleHours(day: string) {
-    setHours((current) =>
-      current.map((item) =>
-        item.day === day ? { ...item, open: !item.open } : item,
-      ),
-    )
-  }
-
-  function toggleList(
-    id: string,
-    update: Dispatch<SetStateAction<SampleToggle[]>>,
-  ) {
-    update((current) =>
-      current.map((item) =>
-        item.id === id ? { ...item, on: !item.on } : item,
-      ),
-    )
-  }
+  const { state, toggleHours, toggleService, toggleArea } = useOperations()
+  const { hours, services, areas } = state
 
   return (
     <div className="stack">
       <SectionIntro title="Settings">
-        Practice hours, services, areas, and payment choices. Switches change
-        this screen only.
+        Practice hours, services, areas, and payment choices. Switches last
+        until you refresh.
       </SectionIntro>
       <Notice>
-        Nothing here is published. Card processing stays disconnected in Phase
-        1.
+        Nothing here is published. Card processing stays disconnected.
       </Notice>
       <section className="stack" aria-labelledby="hours-title">
         <h2 id="hours-title">Hours</h2>
@@ -63,7 +36,7 @@ export function SettingsView() {
             label={item.label}
             detail={item.detail}
             on={item.on}
-            onToggle={() => toggleList(item.id, setServices)}
+            onToggle={() => toggleService(item.id)}
           />
         ))}
       </section>
@@ -75,7 +48,7 @@ export function SettingsView() {
             label={item.label}
             detail={item.detail}
             on={item.on}
-            onToggle={() => toggleList(item.id, setAreas)}
+            onToggle={() => toggleArea(item.id)}
           />
         ))}
       </section>

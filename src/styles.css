@@ -376,6 +376,10 @@ h2 {
   gap: 10px;
 }
 
+.filters .chip:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .chip {
   padding: 12px;
   background: transparent;
@@ -416,6 +420,10 @@ h2 {
 
 .pill-delivered {
   color: #b7ebc8;
+}
+
+.pill-canceled {
+  color: #cbb8c2;
 }
 
 .stepper,
@@ -598,6 +606,84 @@ button:focus-visible,
   .filters {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field span,
+.stepper-label {
+  font-weight: 800;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #0d0d0d;
+  color: var(--ink);
+}
+
+.field textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.fold {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--bg-raised);
+  padding: 0 14px;
+}
+
+.fold summary {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fold[open] {
+  padding-bottom: 14px;
+}
+
+.fold-body,
+.timeline,
+.plain-list {
+  display: grid;
+  gap: 10px;
+}
+
+.timeline,
+.plain-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline li {
+  padding-left: 12px;
+  border-left: 3px solid var(--pink);
+}
+
+.plain-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.stat-value {
+  overflow-wrap: anywhere;
+}
+
+.brand-compact .brand-legal {
+  font-size: 0.98rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
