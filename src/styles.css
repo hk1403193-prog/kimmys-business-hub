@@ -422,6 +422,10 @@ h2 {
   color: #b7ebc8;
 }
 
+.pill-completed {
+  color: #ffb3d4;
+}
+
 .pill-canceled {
   color: #cbb8c2;
 }

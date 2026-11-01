@@ -16,4 +16,8 @@ describe('formatMoney', () => {
   it('shows dollars and cents', () => {
     expect(formatMoney(1.5)).toBe('$1.50')
   })
+
+  it('shows a negative amount instead of hiding it as zero', () => {
+    expect(formatMoney(-5)).toBe('-$5.00')
+  })
 })

@@ -4,7 +4,7 @@ Private command center for **Kimmy's Personal Concierge & Delivery**.
 
 Tagline: **Local People Helping Local People**.
 
-Phase 1 is the mobile shell. Phase 2 is an interactive practice version of the owner tools. It is still not the finished business system, and it is not the live customer website.
+Phase 1 is the mobile shell. Phase 2 is an interactive practice version of the owner tools. Phase 2.1 clarifies order status, service fees, and practice revenue. It is still not the finished business system, and it is not the live customer website.
 
 ## What Phase 2 includes
 
@@ -13,12 +13,18 @@ The same black, hot pink, and leopard command center, with fictional orders that
 1. **Orders.** Create a sample order, edit it, search it, and move it through statuses. Add a shopping list, instructions, pickup and delivery details, a date, and a delivery window. Each order keeps a status history.
 2. **Quotes & Pricing.** Change the fee rules and a practice trip. The calculator separates the merchandise estimate from service earnings, and it shows the fictional amount due before shopping.
 3. **Deliveries.** See one day at a time, with windows, service, priority, workload points, planning minutes, and status. Move stops earlier or later yourself.
-4. **Dashboard.** New, active, and completed counts, expected and completed service earnings, today's workload, and upcoming deliveries update when the sample orders change.
-5. **Customers, Money, Reports, and Settings.** These stay connected to the same practice session. The old sample-week money chart is still there and is labeled separately.
+4. **Dashboard.** New, active, and completed counts, expected and completed service revenue, remaining workload, the full day's workload, and upcoming deliveries update when the sample orders change.
+5. **Customers, Money, Reports, and Settings.** These stay connected to the same practice session. The old sample-week chart, totals, and average are labeled illustrative. They are not payments received.
 
 Refreshing the page puts the original practice data back. Nothing is stored.
 
 Order statuses are: New, Quoted, Awaiting Payment, Confirmed, Shopping, Picked Up, Out for Delivery, Delivered, Completed, and Canceled.
+
+**Delivered** means the order was physically delivered and is not closed yet. It can still appear with upcoming work. **Completed** means the order is closed. Completed and canceled orders stay in the history and leave upcoming deliveries. The route shows the remaining workload and the full day's workload separately.
+
+A manual adjustment that would make the service fee negative is rejected, and the screen explains why. The service fee is never stored as a negative amount and then shown as $0. Merchandise stays separate from the service fee.
+
+Expected service revenue is the service fees on orders that are still open. Completed service revenue is the service fees on closed orders. Neither one is money collected. This practice session does not track payments or unpaid balances.
 
 ## How to try each part
 
@@ -36,15 +42,15 @@ npm run dev
 
 Then, in the preview:
 
-- **Orders:** tap Create sample order, save it, search for the fictional name, and tap Advance or Mark completed.
-- **Quotes:** open Edit fee rules, change the base fee, and watch the fictional earnings change. Merchandise stays separate.
-- **Deliveries:** tap Later on the first stop, then Previous day and Next day. The planning minutes are a workload guess.
-- **Dashboard:** go back to Home after completing an order. The counts and earnings follow the change.
+- **Orders:** tap Create sample order, save it, search for the fictional name, and tap Advance or Mark completed. Delivered stays open. Completed closes the order and removes it from upcoming deliveries.
+- **Quotes:** open Edit fee rules, change the base fee, and watch the service fee change. Merchandise stays separate. A manual adjustment that would drop the service fee below zero is refused.
+- **Deliveries:** tap Later on the first stop, then Previous day and Next day. The planning minutes are a workload guess. Remaining workload and the full day are both shown. Closed orders for that day sit under the open stops.
+- **Dashboard and Reports:** go back to Home after completing an order. Expected service revenue, completed service revenue, and the remaining workload follow the change. The sample-week chart stays labeled illustrative.
 - **Refresh:** the original sample orders return.
 
 ## What stays fictional
 
-Every customer, phone, address, order, fee, and dollar amount is practice data. Earnings are service fees only. The cost of goods is labeled as merchandise and is not treated as business revenue.
+Every customer, phone, address, order, fee, and dollar amount is practice data. Service revenue is service fees only. The cost of goods is labeled as merchandise and is not treated as business revenue. Completed service revenue is not money collected.
 
 ## What is not connected
 

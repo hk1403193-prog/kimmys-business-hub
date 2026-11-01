@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { stepValue } from '../lib/quote'
 import { formatMoney, formatSignedMoney } from '../lib/money'
+import { acceptScenario, calculateServiceQuote } from '../domain/pricing'
 import type { OrderDraft, PricingRules } from '../domain/types'
 import { deliveryWindows, type Priority } from '../domain/types'
 import type { SampleToggle } from '../sample/types'
@@ -27,9 +29,17 @@ export function OrderForm({
   onCancel,
 }: OrderFormProps) {
   const serviceLabels = serviceChoices(services, draft.serviceType)
+  const [feeNotice, setFeeNotice] = useState<string | null>(null)
+  const quote = calculateServiceQuote(rules, draft.scenario)
+  const feeAlert = feeNotice ?? quote.validationMessage
 
   function updateScenario(patch: Partial<OrderDraft['scenario']>) {
-    onChange({ ...draft, scenario: { ...draft.scenario, ...patch } })
+    const result = acceptScenario(rules, draft.scenario, {
+      ...draft.scenario,
+      ...patch,
+    })
+    setFeeNotice(result.message)
+    onChange({ ...draft, scenario: result.scenario })
   }
 
   return (
@@ -176,6 +186,16 @@ export function OrderForm({
       <details className="fold">
         <summary>Practice quote for this order</summary>
         <div className="fold-body">
+          {feeAlert ? (
+            <p className="notice" role="alert">
+              {feeAlert}
+            </p>
+          ) : null}
+          <p className="card-meta">
+            Service fee {formatMoney(quote.earnings)}. Merchandise{' '}
+            {formatMoney(quote.merchandiseTotal)} stays separate and is not
+            part of the service fee.
+          </p>
           <Stepper
             label="Merchandise estimate"
             value={formatMoney(draft.scenario.merchandiseTotal)}

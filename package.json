@@ -2,7 +2,7 @@
   "name": "kimmys-business-hub",
   "private": true,
   "version": "0.1.0",
-  "description": "Private Phase 1 sample preview of Kimmy's Business Hub. Not the live website.",
+  "description": "Private practice command center for Kimmy's Business Hub. Not the live website.",
   "type": "module",
   "scripts": {
     "dev": "vite",

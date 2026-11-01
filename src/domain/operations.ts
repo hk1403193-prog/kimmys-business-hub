@@ -1,5 +1,6 @@
 import type { SampleHours, SampleToggle } from '../sample/types'
 import { applyOrderDraft, applyStatus, createPracticeOrder } from './orders'
+import { acceptScenario, calculateServiceQuote } from './pricing'
 import { reorderRoute } from './schedule'
 import { cloneSettings, createSeed, defaultPracticeScenario, defaultPricingRules, defaultWorkloadRules } from './seed'
 import type {
@@ -22,6 +23,7 @@ export type OperationsState = {
   hours: SampleHours[]
   services: SampleToggle[]
   areas: SampleToggle[]
+  feeNotice: string | null
 }
 
 export type OperationsAction =
@@ -52,7 +54,21 @@ export function createInitialState(today: string): OperationsState {
     hours: settings.hours,
     services: settings.services,
     areas: settings.areas,
+    feeNotice: null,
   }
+}
+
+function feeRejection(
+  rules: PricingRules,
+  practice: QuoteScenario,
+  orders: readonly PracticeOrder[],
+): string | null {
+  const quotes = [
+    calculateServiceQuote(rules, practice),
+    ...orders.map((order) => calculateServiceQuote(rules, order.scenario)),
+  ]
+
+  return quotes.find((quote) => quote.adjustmentRejected)?.validationMessage ?? null
 }
 
 function replaceOrder(
@@ -68,28 +84,51 @@ export function operationsReducer(
   action: OperationsAction,
 ): OperationsState {
   switch (action.type) {
-    case 'create':
+    case 'create': {
+      const guarded = acceptScenario(
+        state.rules,
+        { ...action.draft.scenario, adjustment: 0 },
+        action.draft.scenario,
+      )
+
       return {
         ...state,
         orders: [
-          createPracticeOrder(state.orders, action.draft, action.at),
+          createPracticeOrder(
+            state.orders,
+            { ...action.draft, scenario: guarded.scenario },
+            action.at,
+          ),
           ...state.orders,
         ],
         draftArmed: false,
+        feeNotice: guarded.message,
       }
+    }
     case 'update': {
       const current = state.orders.find((order) => order.id === action.id)
       if (!current) {
         return state
       }
 
+      const guarded = acceptScenario(
+        state.rules,
+        current.scenario,
+        action.draft.scenario,
+      )
+
       return {
         ...state,
         orders: replaceOrder(
           state.orders,
           action.id,
-          applyOrderDraft(current, action.draft, action.at),
+          applyOrderDraft(
+            current,
+            { ...action.draft, scenario: guarded.scenario },
+            action.at,
+          ),
         ),
+        feeNotice: guarded.message,
       }
     }
     case 'status': {
@@ -121,12 +160,24 @@ export function operationsReducer(
           ),
         },
       }
-    case 'rules':
-      return { ...state, rules: action.rules }
+    case 'rules': {
+      const message = feeRejection(action.rules, state.practice, state.orders)
+      if (message) {
+        return { ...state, feeNotice: message }
+      }
+
+      return { ...state, rules: action.rules, feeNotice: null }
+    }
     case 'workload':
       return { ...state, workloadRules: action.rules }
-    case 'practice':
-      return { ...state, practice: action.scenario }
+    case 'practice': {
+      const guarded = acceptScenario(state.rules, state.practice, action.scenario)
+      return {
+        ...state,
+        practice: guarded.scenario,
+        feeNotice: guarded.message,
+      }
+    }
     case 'arm-draft':
       return { ...state, draftArmed: true }
     case 'clear-draft':

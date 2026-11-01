@@ -10,6 +10,7 @@ import { Notice } from '../components/Notice'
 import { OrderCard } from '../components/OrderCard'
 import { OrderForm } from '../components/OrderForm'
 import { SectionIntro } from '../components/SectionIntro'
+import { StatusGuide } from '../components/StatusGuide'
 
 export function OrdersView() {
   const {
@@ -47,6 +48,7 @@ export function OrdersView() {
         Every name and address here is invented. Nothing is sent to your live
         website.
       </Notice>
+      <StatusGuide />
       <label className="field">
         <span>Search sample orders</span>
         <input

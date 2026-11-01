@@ -35,15 +35,20 @@ export function QuotesView({ onOpen }: QuotesViewProps) {
         order in this session.
       </SectionIntro>
       <Notice>
-        These amounts are fictional. Merchandise is kept separate from service
-        earnings. Nothing is billed.
+        These amounts are fictional. Merchandise stays separate from the
+        service fee. Nothing is billed, and this is not money collected.
       </Notice>
+      {state.feeNotice ? (
+        <p className="notice" role="alert">
+          {state.feeNotice}
+        </p>
+      ) : null}
       <section className="hero" aria-label="Sample quote">
-        <p className="eyebrow">Fictional earnings</p>
+        <p className="eyebrow">Service fee</p>
         <p className="hero-stat">{formatMoney(quote.earnings)}</p>
         <p className="hero-copy">
-          Due before shopping {formatMoney(quote.dueBeforeShopping)} · Goods{' '}
-          {formatMoney(quote.merchandiseTotal)}
+          Merchandise {formatMoney(quote.merchandiseTotal)} is separate. Due
+          before shopping {formatMoney(quote.dueBeforeShopping)}.
         </p>
       </section>
       <QuoteBreakdown quote={quote} />

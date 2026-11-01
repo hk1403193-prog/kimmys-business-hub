@@ -9,10 +9,11 @@ export function roundMoney(amount: number): number {
 }
 
 export function formatMoney(amount: number): string {
+  const rounded = Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format(roundMoney(amount))
+  }).format(rounded)
 }
 
 export function formatSignedMoney(amount: number): string {

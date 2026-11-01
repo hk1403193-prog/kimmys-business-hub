@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { calculateServiceQuote } from './pricing'
+import { formatMoney, formatSignedMoney } from '../lib/money'
+import { acceptScenario, calculateServiceQuote } from './pricing'
 import { defaultPracticeScenario, defaultPricingRules } from './seed'
 
 const rules = defaultPricingRules()
@@ -77,6 +78,47 @@ describe('calculateServiceQuote', () => {
     expect(adjusted.dueBeforeShopping).toBe(22)
     expect(capped.earnings).toBe(0)
     expect(capped.dueBeforeShopping).toBe(0)
+    expect(capped.adjustmentRejected).toBe(false)
+    expect(capped.merchandiseTotal).toBe(20)
+  })
+
+  it('rejects a manual adjustment that would make the service fee negative', () => {
+    const quote = calculateServiceQuote(rules, { ...practice, adjustment: -80 })
+    const kept = acceptScenario(rules, practice, { ...practice, adjustment: -80 })
+
+    expect(quote.adjustmentRejected).toBe(true)
+    expect(quote.validationMessage).toMatch(/negative/i)
+    expect(quote.requestedAdjustment).toBe(-80)
+    expect(quote.adjustment).toBe(0)
+    expect(quote.earnings).toBe(30)
+    expect(quote.merchandiseTotal).toBe(20)
+    expect(formatMoney(quote.earnings)).toBe('$30.00')
+    expect(formatSignedMoney(quote.requestedAdjustment)).toBe('-$80.00')
+    expect(kept.scenario.adjustment).toBe(0)
+    expect(kept.message).toMatch(/negative/i)
+  })
+
+  it('allows a zero service fee without treating it as a rejected adjustment', () => {
+    const discounted = calculateServiceQuote(rules, { ...practice, discount: 30 })
+    const adjusted = calculateServiceQuote(rules, { ...practice, adjustment: -30 })
+
+    expect(discounted.adjustmentRejected).toBe(false)
+    expect(discounted.earnings).toBe(0)
+    expect(discounted.merchandiseTotal).toBe(20)
+    expect(adjusted.adjustmentRejected).toBe(false)
+    expect(adjusted.earnings).toBe(0)
+    expect(adjusted.merchandiseTotal).toBe(20)
+    expect(adjusted.adjustment).toBe(-30)
+  })
+
+  it('explains when a safe adjustment clears the amount due before shopping', () => {
+    const quote = calculateServiceQuote(rules, { ...practice, adjustment: -28 })
+
+    expect(quote.adjustmentRejected).toBe(false)
+    expect(quote.earnings).toBe(2)
+    expect(quote.dueBeforeShopping).toBe(0)
+    expect(quote.dueNote).toMatch(/before shopping/i)
+    expect(quote.merchandiseTotal).toBe(20)
   })
 
   it('treats invalid trip numbers as zero', () => {
