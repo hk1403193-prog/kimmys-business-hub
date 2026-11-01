@@ -1,3 +1,4 @@
+import { countsAsOpenWork, isUpcomingOrder } from './orders'
 import { calculateServiceQuote } from './pricing'
 import {
   activePracticeStatuses,
@@ -6,7 +7,7 @@ import {
   type PricingRules,
   type WorkloadRules,
 } from './types'
-import { calculateWorkload } from './workload'
+import { summarizeDayWorkload } from './workload'
 
 export type OperationsSummary = {
   fresh: number
@@ -16,7 +17,13 @@ export type OperationsSummary = {
   completedRevenue: number
   todayPoints: number
   todayMinutes: number
+  todayRemainingPoints: number
+  todayRemainingMinutes: number
+  todayCompletedPoints: number
+  todayCompletedMinutes: number
   todayEarnings: number
+  todayRemainingEarnings: number
+  todayCompletedEarnings: number
   upcoming: PracticeOrder[]
 }
 
@@ -38,24 +45,30 @@ export function summarizeOperations(
   const detailed = orders.map((order) => ({
     order,
     quote: calculateServiceQuote(rules, order.scenario),
-    workload: calculateWorkload(workloadRules, order.scenario),
   }))
-  const expected = detailed.filter(
-    (item) =>
-      item.order.status !== 'Completed' && item.order.status !== 'Canceled',
+  const day = summarizeDayWorkload(orders, workloadRules, today)
+  const expected = detailed.filter((item) =>
+    countsAsOpenWork(item.order.status),
   )
   const completed = detailed.filter((item) => item.order.status === 'Completed')
   const todayJobs = detailed.filter(
     (item) =>
       item.order.requestedDate === today && item.order.status !== 'Canceled',
   )
+  const todayRemaining = todayJobs.filter((item) =>
+    countsAsOpenWork(item.order.status),
+  )
+  const todayCompleted = todayJobs.filter(
+    (item) => item.order.status === 'Completed',
+  )
+  const todayRemainingEarnings = sum(
+    todayRemaining.map((item) => item.quote.earnings),
+  )
+  const todayCompletedEarnings = sum(
+    todayCompleted.map((item) => item.quote.earnings),
+  )
   const upcoming = detailed
-    .filter(
-      (item) =>
-        item.order.status !== 'Canceled' &&
-        item.order.status !== 'Completed' &&
-        item.order.requestedDate >= today,
-    )
+    .filter((item) => isUpcomingOrder(item.order, today))
     .map((item) => item.order)
     .sort((left, right) => {
       const byDate = left.requestedDate.localeCompare(right.requestedDate)
@@ -74,9 +87,15 @@ export function summarizeOperations(
     completed: completed.length,
     expectedRevenue: sum(expected.map((item) => item.quote.earnings)),
     completedRevenue: sum(completed.map((item) => item.quote.earnings)),
-    todayPoints: sum(todayJobs.map((item) => item.workload.points)),
-    todayMinutes: sum(todayJobs.map((item) => item.workload.minutes)),
-    todayEarnings: sum(todayJobs.map((item) => item.quote.earnings)),
+    todayPoints: day.totalPoints,
+    todayMinutes: day.totalMinutes,
+    todayRemainingPoints: day.remainingPoints,
+    todayRemainingMinutes: day.remainingMinutes,
+    todayCompletedPoints: day.completedPoints,
+    todayCompletedMinutes: day.completedMinutes,
+    todayRemainingEarnings,
+    todayCompletedEarnings,
+    todayEarnings: sum([todayRemainingEarnings, todayCompletedEarnings]),
     upcoming,
   }
 }

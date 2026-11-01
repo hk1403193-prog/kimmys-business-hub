@@ -14,7 +14,7 @@ import type { Workload } from '../domain/workload'
 import type { SampleToggle } from '../sample/types'
 import { formatMoney } from '../lib/money'
 import { OrderForm } from './OrderForm'
-import { PracticeStatusPill } from './PracticeStatusPill'
+import { PracticeStatusPill, statusMeaning } from './PracticeStatusPill'
 import { QuoteBreakdown } from './QuoteBreakdown'
 
 type OrderCardProps = {
@@ -57,7 +57,12 @@ export function OrderCard({
       <p className="card-meta">
         {formatPracticeDate(order.requestedDate, today)} · {order.deliveryWindow}
       </p>
-      <p className="card-amount">{formatMoney(quote.earnings)} fictional earnings</p>
+      <p className="card-amount">{formatMoney(quote.earnings)} service fee</p>
+      {order.status === 'Delivered' ||
+      order.status === 'Completed' ||
+      order.status === 'Canceled' ? (
+        <p className="card-meta">{statusMeaning(order.status)}</p>
+      ) : null}
       <button
         type="button"
         className="btn btn-secondary"
@@ -106,6 +111,11 @@ export function OrderCard({
               ))}
             </ol>
           </details>
+          <p className="card-meta">
+            Advance moves one step. Delivered is the physical handoff and
+            leaves the order open. Mark completed closes it and removes it
+            from upcoming deliveries.
+          </p>
           <div className="stack">
             {upcoming ? (
               <button

@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { summarizeOperations } from './dashboard'
 import { blankDraft, draftFromOrder } from './seed'
 import { createInitialState, operationsReducer } from './operations'
-import { searchOrders } from './orders'
+import { countsAsOpenWork, searchOrders } from './orders'
 import { calculateServiceQuote } from './pricing'
-import { routeForDate } from './schedule'
+import { completedOnDate, routeForDate } from './schedule'
 import { calculateWorkload } from './workload'
 
 const today = '2026-11-01'
@@ -149,6 +149,272 @@ describe('dashboard totals', () => {
     expect(summary.completed).toBe(2)
     expect(summary.completedRevenue).toBe(34)
     expect(summary.expectedRevenue).toBe(95)
+  })
+})
+
+describe('creating and canceling orders', () => {
+  it('keeps a canceled order in history and removes it from upcoming deliveries', () => {
+    let state = createInitialState(today)
+    const draft = blankDraft(today, state.practice)
+    draft.customer = 'Quinn Example'
+    draft.scenario = { ...draft.scenario, adjustment: -80 }
+
+    state = operationsReducer(state, { type: 'create', draft, at })
+    const created = state.orders.find((order) => order.customer === 'Quinn Example')
+
+    expect(created?.status).toBe('New')
+    expect(created?.scenario.adjustment).toBe(0)
+    expect(state.feeNotice).toMatch(/negative/i)
+    expect(summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    ).upcoming.map((order) => order.id)).toContain(created?.id)
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: created?.id ?? '',
+      status: 'Canceled',
+      at,
+    })
+    const summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(state.orders.find((order) => order.id === created?.id)?.status).toBe(
+      'Canceled',
+    )
+    expect(summary.upcoming.map((order) => order.id)).not.toContain(created?.id)
+    expect(routeForDate(state.orders, today).map((order) => order.id)).not.toContain(
+      created?.id,
+    )
+    expect(searchOrders(state.orders, 'quinn', 'Canceled')).toHaveLength(1)
+  })
+})
+
+describe('delivered and completed', () => {
+  it('keeps a delivered order upcoming until it is closed', () => {
+    let state = createInitialState(today)
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1041',
+      status: 'Delivered',
+      at,
+    })
+    let summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(state.orders.find((order) => order.id === 'S-1041')?.status).toBe(
+      'Delivered',
+    )
+    expect(summary.upcoming.map((order) => order.id)).toContain('S-1041')
+    expect(routeForDate(state.orders, today).map((order) => order.id)).toContain(
+      'S-1041',
+    )
+    expect(summary.active).toBe(4)
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1041',
+      status: 'Completed',
+      at,
+    })
+    summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+    const closed = state.orders.find((order) => order.id === 'S-1041')
+
+    expect(closed?.status).toBe('Completed')
+    expect(closed?.timeline.map((entry) => entry.status)).toEqual([
+      'Out for Delivery',
+      'Delivered',
+      'Completed',
+    ])
+    expect(summary.upcoming.map((order) => order.id)).not.toContain('S-1041')
+    expect(routeForDate(state.orders, today).map((order) => order.id)).not.toContain(
+      'S-1041',
+    )
+    expect(completedOnDate(state.orders, today).map((order) => order.id)).toContain(
+      'S-1041',
+    )
+    expect(searchOrders(state.orders, 'blake', 'Completed').map((order) => order.id)).toEqual([
+      'S-1041',
+    ])
+    expect(summary.completed).toBe(2)
+    expect(summary.expectedRevenue).toBeLessThan(121)
+    expect(summary.completedRevenue).toBeGreaterThan(8)
+  })
+})
+
+describe('fee changes and dashboard totals', () => {
+  it('uses the same service-fee rule for quotes, dashboard, and reports', () => {
+    let state = createInitialState(today)
+    const before = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+    const openOrders = state.orders.filter((order) => countsAsOpenWork(order.status))
+    const closedOrders = state.orders.filter((order) => order.status === 'Completed')
+    const manualExpected = Math.round(
+      openOrders.reduce(
+        (total, order) =>
+          total + calculateServiceQuote(state.rules, order.scenario).earnings,
+        0,
+      ) * 100,
+    ) / 100
+
+    expect(before.expectedRevenue).toBe(manualExpected)
+
+    state = operationsReducer(state, {
+      type: 'rules',
+      rules: { ...state.rules, baseFee: state.rules.baseFee + 2 },
+    })
+    const after = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(after.expectedRevenue).toBe(before.expectedRevenue + openOrders.length * 2)
+    expect(after.completedRevenue).toBe(
+      before.completedRevenue + closedOrders.length * 2,
+    )
+    expect(
+      calculateServiceQuote(state.rules, state.orders[0].scenario).earnings,
+    ).toBe(
+      calculateServiceQuote(
+        { ...state.rules, baseFee: state.rules.baseFee - 2 },
+        state.orders[0].scenario,
+      ).earnings + 2,
+    )
+  })
+
+  it('rejects a negative adjustment and leaves the stored service fee unchanged', () => {
+    let state = createInitialState(today)
+    const before = calculateServiceQuote(state.rules, state.practice)
+
+    state = operationsReducer(state, {
+      type: 'practice',
+      scenario: { ...state.practice, adjustment: -5 },
+    })
+    expect(state.practice.adjustment).toBe(-5)
+    expect(state.feeNotice).toBeNull()
+    expect(calculateServiceQuote(state.rules, state.practice).earnings).toBe(25)
+
+    state = operationsReducer(state, {
+      type: 'practice',
+      scenario: { ...state.practice, adjustment: -80 },
+    })
+    const after = calculateServiceQuote(state.rules, state.practice)
+
+    expect(state.practice.adjustment).toBe(-5)
+    expect(state.feeNotice).toMatch(/negative/i)
+    expect(after.adjustmentRejected).toBe(false)
+    expect(after.earnings).toBe(25)
+    expect(after.earnings).not.toBe(0)
+    expect(after.merchandiseTotal).toBe(before.merchandiseTotal)
+  })
+})
+
+describe('remaining and completed workload', () => {
+  it('keeps the full day total and separates the work still open', () => {
+    let state = createInitialState(today)
+    const before = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+    const avery = state.orders.find((order) => order.id === 'S-1042')
+    const averyWork = calculateWorkload(
+      state.workloadRules,
+      avery?.scenario ?? state.practice,
+    )
+
+    expect(before.todayCompletedPoints).toBe(0)
+    expect(before.todayRemainingPoints).toBe(before.todayPoints)
+    expect(before.todayRemainingMinutes).toBe(before.todayMinutes)
+    expect(before.upcoming.map((order) => order.id)).not.toContain('S-1029')
+    expect(before.upcoming.map((order) => order.id)).not.toContain('S-1048')
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1042',
+      status: 'Completed',
+      at,
+    })
+    const after = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(after.todayPoints).toBe(before.todayPoints)
+    expect(after.todayMinutes).toBe(before.todayMinutes)
+    expect(after.todayRemainingPoints).toBe(before.todayRemainingPoints - averyWork.points)
+    expect(after.todayRemainingMinutes).toBe(
+      before.todayRemainingMinutes - averyWork.minutes,
+    )
+    expect(after.todayCompletedPoints).toBe(averyWork.points)
+    expect(after.todayCompletedMinutes).toBe(averyWork.minutes)
+    expect(after.upcoming.map((order) => order.id)).not.toContain('S-1042')
+    expect(routeForDate(state.orders, today).map((order) => order.id)).not.toContain(
+      'S-1042',
+    )
+    expect(state.orders.find((order) => order.id === 'S-1042')?.status).toBe(
+      'Completed',
+    )
+  })
+})
+
+describe('refresh', () => {
+  it('starts again from the fictional sample when a session is created', () => {
+    let state = createInitialState(today)
+    const original = state.orders.map((order) => `${order.id}:${order.status}`)
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1042',
+      status: 'Canceled',
+      at,
+    })
+    state = operationsReducer(state, {
+      type: 'rules',
+      rules: { ...state.rules, baseFee: 20 },
+    })
+    state = operationsReducer(state, {
+      type: 'practice',
+      scenario: { ...state.practice, adjustment: -4 },
+    })
+
+    const refreshed = createInitialState(today)
+
+    expect(refreshed.orders.map((order) => `${order.id}:${order.status}`)).toEqual(
+      original,
+    )
+    expect(refreshed.rules.baseFee).toBe(8)
+    expect(refreshed.practice.adjustment).toBe(0)
+    expect(refreshed.feeNotice).toBeNull()
+    expect(state.orders.find((order) => order.id === 'S-1042')?.status).toBe(
+      'Canceled',
+    )
+    expect(state.rules.baseFee).toBe(20)
   })
 })
 

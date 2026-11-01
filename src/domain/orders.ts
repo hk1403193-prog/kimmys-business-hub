@@ -14,6 +14,14 @@ export function linesFromText(text: string): string[] {
     .filter(Boolean)
 }
 
+export function countsAsOpenWork(status: PracticeStatus): boolean {
+  return status !== 'Completed' && status !== 'Canceled'
+}
+
+export function isUpcomingOrder(order: PracticeOrder, today: string): boolean {
+  return countsAsOpenWork(order.status) && order.requestedDate >= today
+}
+
 export function nextStatus(status: PracticeStatus): PracticeStatus | null {
   const flow: PracticeStatus[] = practiceStatuses.filter(
     (item) => item !== 'Canceled',
