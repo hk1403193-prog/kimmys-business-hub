@@ -71,12 +71,64 @@ describe('calculateServiceQuote', () => {
     const capped = calculateServiceQuote(rules, { ...practice, discount: 40 })
 
     expect(discounted.merchandiseTotal).toBe(20)
+    expect(discounted.adjustmentRejected).toBe(false)
     expect(discounted.earnings).toBe(25)
     expect(discounted.dueBeforeShopping).toBe(22)
+    expect(adjusted.adjustmentRejected).toBe(false)
     expect(adjusted.earnings).toBe(25)
     expect(adjusted.dueBeforeShopping).toBe(22)
     expect(capped.earnings).toBe(0)
     expect(capped.dueBeforeShopping).toBe(0)
+  })
+
+  it('rejects an adjustment that would make the service fee negative', () => {
+    const quote = calculateServiceQuote(rules, { ...practice, adjustment: -100 })
+
+    expect(quote.adjustmentRejected).toBe(true)
+    expect(quote.adjustment).toBe(0)
+    expect(quote.earnings).toBe(30)
+    expect(quote.dueBeforeShopping).toBe(27)
+    expect(quote.merchandiseTotal).toBe(20)
+  })
+
+  it('allows a manual adjustment that brings the service fee to zero', () => {
+    const quote = calculateServiceQuote(rules, { ...practice, adjustment: -30 })
+
+    expect(quote.adjustmentRejected).toBe(false)
+    expect(quote.adjustment).toBe(-30)
+    expect(quote.earnings).toBe(0)
+    expect(quote.dueBeforeShopping).toBe(0)
+    expect(quote.merchandiseTotal).toBe(20)
+  })
+
+  it('calculates a zero service fee when every fee is zero', () => {
+    const quote = calculateServiceQuote(
+      {
+        ...rules,
+        baseFee: 0,
+        perExtraMile: 0,
+        extraStopFee: 0,
+        rushFee: 0,
+        waitingBlockFee: 0,
+        smallOrderEnabled: false,
+        smallOrderFee: 0,
+        serviceAreas: rules.serviceAreas.map((area) => ({ ...area, fee: 0 })),
+        shoppingTiers: rules.shoppingTiers.map((tier) => ({ ...tier, fee: 0 })),
+      },
+      {
+        ...practice,
+        rush: true,
+        extraStops: 2,
+        waitingMinutes: 30,
+        discount: 10,
+        adjustment: 0,
+      },
+    )
+
+    expect(quote.earnings).toBe(0)
+    expect(quote.dueBeforeShopping).toBe(0)
+    expect(quote.adjustmentRejected).toBe(false)
+    expect(quote.merchandiseTotal).toBe(20)
   })
 
   it('treats invalid trip numbers as zero', () => {

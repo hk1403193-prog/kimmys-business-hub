@@ -6,6 +6,7 @@ import type { OrderDraft, OrderListFilter } from '../domain/types'
 import { orderListFilters } from '../domain/types'
 import { calculateWorkload } from '../domain/workload'
 import { useOperations } from '../state/OperationsProvider'
+import { StatusMeaning } from '../components/ClarityNotes'
 import { Notice } from '../components/Notice'
 import { OrderCard } from '../components/OrderCard'
 import { OrderForm } from '../components/OrderForm'
@@ -47,6 +48,12 @@ export function OrdersView() {
         Every name and address here is invented. Nothing is sent to your live
         website.
       </Notice>
+      <StatusMeaning />
+      {state.feeNotice ? (
+        <p className="form-alert" role="alert">
+          {state.feeNotice}
+        </p>
+      ) : null}
       <label className="field">
         <span>Search sample orders</span>
         <input

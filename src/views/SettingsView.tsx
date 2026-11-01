@@ -68,7 +68,7 @@ export function SettingsView() {
             <span className="pill pill-new">Not connected</span>
           </div>
           <p className="card-body">
-            No payment company is linked. Phase 1 cannot take a card payment.
+            No payment company is linked. This preview cannot take a card payment.
           </p>
         </article>
       </section>

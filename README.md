@@ -4,7 +4,7 @@ Private command center for **Kimmy's Personal Concierge & Delivery**.
 
 Tagline: **Local People Helping Local People**.
 
-Phase 1 is the mobile shell. Phase 2 is an interactive practice version of the owner tools. It is still not the finished business system, and it is not the live customer website.
+Phase 1 is the mobile shell. Phase 2 is an interactive practice version of the owner tools. Phase 2.1 makes the status rules and service-fee labels explicit. It is still not the finished business system, and it is not the live customer website.
 
 ## What Phase 2 includes
 
@@ -19,6 +19,15 @@ The same black, hot pink, and leopard command center, with fictional orders that
 Refreshing the page puts the original practice data back. Nothing is stored.
 
 Order statuses are: New, Quoted, Awaiting Payment, Confirmed, Shopping, Picked Up, Out for Delivery, Delivered, Completed, and Canceled.
+
+## What Phase 2.1 clarifies
+
+- **Delivered** means the sample order was physically delivered and is still open.
+- **Completed** means the order is closed. It stays in the history and leaves upcoming deliveries. Canceled orders leave the route and the workload, and they stay in the history too.
+- The dashboard and route show **remaining** workload and the **daily total**. Completed work is counted separately.
+- Service fees cannot go below $0. A manual adjustment that would do that is rejected, and the screen says so.
+- **Expected service revenue** is still open. **Completed service revenue** is closed. Neither one is money collected. The sample-week chart is labeled illustrative.
+- Refreshing the page still restores the original practice data.
 
 ## How to try each part
 
@@ -37,9 +46,9 @@ npm run dev
 Then, in the preview:
 
 - **Orders:** tap Create sample order, save it, search for the fictional name, and tap Advance or Mark completed.
-- **Quotes:** open Edit fee rules, change the base fee, and watch the fictional earnings change. Merchandise stays separate.
-- **Deliveries:** tap Later on the first stop, then Previous day and Next day. The planning minutes are a workload guess.
-- **Dashboard:** go back to Home after completing an order. The counts and earnings follow the change.
+- **Quotes:** open Edit fee rules, change the base fee, and watch the service fee change. Merchandise stays separate. On the practice trip, lower the manual adjustment until the screen refuses a negative service fee.
+- **Deliveries:** tap Later on the first stop, then Previous day and Next day. Completed orders appear under Completed history. The planning minutes are a workload guess.
+- **Dashboard:** go back to Home after marking an order Delivered, then Completed. Upcoming deliveries and the two revenue totals follow that change. Remaining points drop only when the order is completed or canceled.
 - **Refresh:** the original sample orders return.
 
 ## What stays fictional

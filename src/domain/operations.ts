@@ -1,5 +1,6 @@
 import type { SampleHours, SampleToggle } from '../sample/types'
 import { applyOrderDraft, applyStatus, createPracticeOrder } from './orders'
+import { reconcileScenario } from './pricing'
 import { reorderRoute } from './schedule'
 import { cloneSettings, createSeed, defaultPracticeScenario, defaultPricingRules, defaultWorkloadRules } from './seed'
 import type {
@@ -18,6 +19,7 @@ export type OperationsState = {
   rules: PricingRules
   workloadRules: WorkloadRules
   practice: QuoteScenario
+  feeNotice: string | null
   draftArmed: boolean
   hours: SampleHours[]
   services: SampleToggle[]
@@ -48,6 +50,7 @@ export function createInitialState(today: string): OperationsState {
     rules: defaultPricingRules(),
     workloadRules: defaultWorkloadRules(),
     practice: defaultPracticeScenario(),
+    feeNotice: null,
     draftArmed: false,
     hours: settings.hours,
     services: settings.services,
@@ -68,28 +71,41 @@ export function operationsReducer(
   action: OperationsAction,
 ): OperationsState {
   switch (action.type) {
-    case 'create':
+    case 'create': {
+      const created = createPracticeOrder(state.orders, action.draft, action.at)
+      const reconciled = reconcileScenario(
+        state.rules,
+        { ...created.scenario, adjustment: 0 },
+        created.scenario,
+      )
+
       return {
         ...state,
-        orders: [
-          createPracticeOrder(state.orders, action.draft, action.at),
-          ...state.orders,
-        ],
+        orders: [{ ...created, scenario: reconciled.scenario }, ...state.orders],
         draftArmed: false,
+        feeNotice: reconciled.notice,
       }
+    }
     case 'update': {
       const current = state.orders.find((order) => order.id === action.id)
       if (!current) {
         return state
       }
 
+      const drafted = applyOrderDraft(current, action.draft, action.at)
+      const reconciled = reconcileScenario(
+        state.rules,
+        current.scenario,
+        drafted.scenario,
+      )
+
       return {
         ...state,
-        orders: replaceOrder(
-          state.orders,
-          action.id,
-          applyOrderDraft(current, action.draft, action.at),
-        ),
+        orders: replaceOrder(state.orders, action.id, {
+          ...drafted,
+          scenario: reconciled.scenario,
+        }),
+        feeNotice: reconciled.notice,
       }
     }
     case 'status': {
@@ -121,12 +137,56 @@ export function operationsReducer(
           ),
         },
       }
-    case 'rules':
-      return { ...state, rules: action.rules }
+    case 'rules': {
+      let feeNotice: string | null = null
+      const practice = reconcileScenario(
+        action.rules,
+        state.practice,
+        state.practice,
+      )
+      if (practice.notice) {
+        feeNotice = practice.notice
+      }
+
+      const orders = state.orders.map((order) => {
+        const reconciled = reconcileScenario(
+          action.rules,
+          order.scenario,
+          order.scenario,
+        )
+        if (reconciled.notice) {
+          feeNotice = reconciled.notice
+        }
+        if (reconciled.scenario === order.scenario) {
+          return order
+        }
+
+        return { ...order, scenario: reconciled.scenario }
+      })
+
+      return {
+        ...state,
+        rules: action.rules,
+        practice: practice.scenario,
+        orders,
+        feeNotice,
+      }
+    }
     case 'workload':
       return { ...state, workloadRules: action.rules }
-    case 'practice':
-      return { ...state, practice: action.scenario }
+    case 'practice': {
+      const reconciled = reconcileScenario(
+        state.rules,
+        state.practice,
+        action.scenario,
+      )
+
+      return {
+        ...state,
+        practice: reconciled.scenario,
+        feeNotice: reconciled.notice,
+      }
+    }
     case 'arm-draft':
       return { ...state, draftArmed: true }
     case 'clear-draft':

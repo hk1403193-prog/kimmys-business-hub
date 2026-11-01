@@ -3,7 +3,7 @@ import { summarizeOperations } from './dashboard'
 import { blankDraft, draftFromOrder } from './seed'
 import { createInitialState, operationsReducer } from './operations'
 import { searchOrders } from './orders'
-import { calculateServiceQuote } from './pricing'
+import { calculateServiceQuote, negativeServiceFeeMessage } from './pricing'
 import { routeForDate } from './schedule'
 import { calculateWorkload } from './workload'
 
@@ -149,6 +149,182 @@ describe('dashboard totals', () => {
     expect(summary.completed).toBe(2)
     expect(summary.completedRevenue).toBe(34)
     expect(summary.expectedRevenue).toBe(95)
+  })
+})
+
+describe('creating and canceling orders', () => {
+  it('adds service revenue without merchandise and removes a canceled order', () => {
+    let state = createInitialState(today)
+    const draft = blankDraft(today, state.practice)
+    draft.customer = 'Riley Sample'
+    draft.scenario = { ...draft.scenario, merchandiseTotal: 80 }
+
+    state = operationsReducer(state, { type: 'create', draft, at })
+    const created = state.orders[0]
+    const createdFee = calculateServiceQuote(state.rules, created.scenario)
+    let summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(created.customer).toBe('Riley Sample')
+    expect(created.status).toBe('New')
+    expect(createdFee.merchandiseTotal).toBe(80)
+    expect(createdFee.earnings).toBe(26)
+    expect(summary.fresh).toBe(2)
+    expect(summary.expectedRevenue).toBe(147)
+    expect(summary.todayRemainingPoints).toBe(12)
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1041',
+      status: 'Canceled',
+      at,
+    })
+    summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(summary.expectedRevenue).toBe(139)
+    expect(summary.completedRevenue).toBe(8)
+    expect(summary.todayPoints).toBe(10)
+    expect(summary.todayRemainingPoints).toBe(10)
+    expect(summary.todayCompletedPoints).toBe(0)
+    expect(summary.upcoming.map((order) => order.id)).not.toContain('S-1041')
+    expect(routeForDate(state.orders, today).map((order) => order.id)).not.toContain(
+      'S-1041',
+    )
+    expect(state.orders.find((order) => order.id === 'S-1041')?.status).toBe(
+      'Canceled',
+    )
+  })
+})
+
+describe('delivered and completed', () => {
+  it('keeps a delivered order open, then closes it', () => {
+    let state = createInitialState(today)
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1041',
+      status: 'Delivered',
+      at,
+    })
+    let summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(summary.upcoming.map((order) => order.id)).toContain('S-1041')
+    expect(summary.expectedRevenue).toBe(121)
+    expect(summary.completedRevenue).toBe(8)
+    expect(summary.active).toBe(4)
+    expect(summary.todayRemainingPoints).toBe(9)
+    expect(summary.todayCompletedPoints).toBe(0)
+
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1041',
+      status: 'Completed',
+      at,
+    })
+    summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(summary.upcoming.map((order) => order.id)).not.toContain('S-1041')
+    expect(summary.upcoming.map((order) => order.id)).not.toContain('S-1048')
+    expect(summary.expectedRevenue).toBe(113)
+    expect(summary.completedRevenue).toBe(16)
+    expect(summary.active).toBe(3)
+    expect(summary.todayPoints).toBe(9)
+    expect(summary.todayRemainingPoints).toBe(7)
+    expect(summary.todayCompletedPoints).toBe(2)
+    expect(summary.todayRemainingMinutes).toBe(93)
+    expect(summary.todayCompletedMinutes).toBe(25)
+    expect(routeForDate(state.orders, today).map((order) => order.id)).not.toContain(
+      'S-1041',
+    )
+    expect(state.orders.find((order) => order.id === 'S-1041')?.status).toBe(
+      'Completed',
+    )
+  })
+})
+
+describe('fee changes and refresh', () => {
+  it('updates dashboard totals when the shared base fee changes', () => {
+    let state = createInitialState(today)
+    state = operationsReducer(state, {
+      type: 'rules',
+      rules: { ...state.rules, baseFee: 9 },
+    })
+    const summary = summarizeOperations(
+      state.orders,
+      state.rules,
+      state.workloadRules,
+      today,
+    )
+
+    expect(summary.expectedRevenue).toBe(126)
+    expect(summary.completedRevenue).toBe(9)
+    expect(summary.todayEarnings).toBe(78.5)
+  })
+
+  it('rejects a manual adjustment that would make the service fee negative', () => {
+    let state = createInitialState(today)
+    state = operationsReducer(state, {
+      type: 'practice',
+      scenario: { ...state.practice, adjustment: -100 },
+    })
+    const quote = calculateServiceQuote(state.rules, state.practice)
+
+    expect(state.practice.adjustment).toBe(0)
+    expect(state.feeNotice).toBe(negativeServiceFeeMessage)
+    expect(quote.earnings).toBe(30)
+    expect(quote.adjustmentRejected).toBe(false)
+    expect(quote.merchandiseTotal).toBe(20)
+  })
+
+  it('restores the original sample session on a fresh load', () => {
+    let state = createInitialState(today)
+    const originalIds = state.orders.map((order) => order.id)
+
+    state = operationsReducer(state, {
+      type: 'rules',
+      rules: { ...state.rules, baseFee: 20 },
+    })
+    state = operationsReducer(state, {
+      type: 'status',
+      id: 'S-1042',
+      status: 'Completed',
+      at,
+    })
+    state = operationsReducer(state, {
+      type: 'practice',
+      scenario: { ...state.practice, adjustment: -4 },
+    })
+
+    const reloaded = createInitialState(today)
+
+    expect(reloaded.rules.baseFee).toBe(8)
+    expect(reloaded.practice.adjustment).toBe(0)
+    expect(reloaded.feeNotice).toBeNull()
+    expect(reloaded.orders.map((order) => order.id)).toEqual(originalIds)
+    expect(reloaded.orders.find((order) => order.id === 'S-1042')).toMatchObject({
+      status: 'New',
+      timeline: [expect.objectContaining({ status: 'New' })],
+    })
+    expect(state.rules.baseFee).toBe(20)
   })
 })
 

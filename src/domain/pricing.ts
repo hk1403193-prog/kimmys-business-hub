@@ -15,6 +15,23 @@ function dollars(amount: number): number {
   return Math.round(amount * 100) / 100
 }
 
+export const negativeServiceFeeMessage =
+  'That adjustment would make the service fee negative, so it was not applied.'
+
+function sameExceptAdjustment(left: QuoteScenario, right: QuoteScenario): boolean {
+  return (
+    left.miles === right.miles &&
+    left.serviceAreaId === right.serviceAreaId &&
+    left.extraStops === right.extraStops &&
+    left.rush === right.rush &&
+    left.waitingMinutes === right.waitingMinutes &&
+    left.shoppingTierId === right.shoppingTierId &&
+    left.itemCount === right.itemCount &&
+    left.merchandiseTotal === right.merchandiseTotal &&
+    left.discount === right.discount
+  )
+}
+
 export function calculateServiceQuote(
   rules: PricingRules,
   scenario: QuoteScenario,
@@ -73,11 +90,20 @@ export function calculateServiceQuote(
     lines.reduce((sum, line) => sum + line.amount, 0),
   )
   const discount = Math.min(roundMoney(scenario.discount), serviceSubtotal)
-  const adjustment = dollars(scenario.adjustment)
+  const requestedAdjustment = dollars(scenario.adjustment)
   const dueSubtotal = dollars(
     lines
       .filter((line) => line.dueBeforeShopping)
       .reduce((sum, line) => sum + line.amount, 0),
+  )
+  const rawEarnings = dollars(serviceSubtotal - discount + requestedAdjustment)
+  const adjustmentRejected = rawEarnings < 0
+  const adjustment = adjustmentRejected ? 0 : requestedAdjustment
+  const earnings = adjustmentRejected
+    ? dollars(serviceSubtotal - discount)
+    : rawEarnings
+  const dueRaw = dollars(
+    dueSubtotal - Math.min(discount, dueSubtotal) + adjustment,
   )
 
   return {
@@ -86,10 +112,32 @@ export function calculateServiceQuote(
     serviceSubtotal,
     discount,
     adjustment,
+    adjustmentRejected,
     merchandiseTotal,
-    earnings: dollars(serviceSubtotal - discount + adjustment),
-    dueBeforeShopping: dollars(
-      dueSubtotal - Math.min(discount, dueSubtotal) + adjustment,
-    ),
+    earnings,
+    dueBeforeShopping: dueRaw < 0 ? 0 : dueRaw,
+  }
+}
+
+export function reconcileScenario(
+  rules: PricingRules,
+  previous: QuoteScenario,
+  next: QuoteScenario,
+): { scenario: QuoteScenario; notice: string | null } {
+  if (!calculateServiceQuote(rules, next).adjustmentRejected) {
+    return { scenario: next, notice: null }
+  }
+
+  const previousStillValid = !calculateServiceQuote(rules, previous).adjustmentRejected
+  if (sameExceptAdjustment(previous, next) && previousStillValid) {
+    return { scenario: previous, notice: negativeServiceFeeMessage }
+  }
+
+  const room = calculateServiceQuote(rules, { ...next, adjustment: 0 }).earnings
+
+  return {
+    scenario: { ...next, adjustment: dollars(-room) },
+    notice:
+      'That adjustment would make the service fee negative. It was reduced so the service fee stays at $0.',
   }
 }
