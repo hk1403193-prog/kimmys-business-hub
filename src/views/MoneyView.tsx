@@ -1,9 +1,18 @@
 import { sampleMoneyItems } from '../sample/data'
+import { summarizeOperations } from '../domain/dashboard'
 import { formatMoney, summarizeMoney } from '../lib/money'
+import { useOperations } from '../state/OperationsProvider'
 import { Notice } from '../components/Notice'
 import { SectionIntro } from '../components/SectionIntro'
 
 export function MoneyView() {
+  const { state } = useOperations()
+  const live = summarizeOperations(
+    state.orders,
+    state.rules,
+    state.workloadRules,
+    state.today,
+  )
   const summary = summarizeMoney(sampleMoneyItems)
 
   return (
@@ -13,9 +22,21 @@ export function MoneyView() {
         from the single day on the dashboard.
       </SectionIntro>
       <Notice>
-        No bank, card processor, or payment company is connected. These amounts
-        are fictional.
+        No bank, card processor, or payment company is connected. Service
+        earnings below come from the open sample orders. The week snapshot is
+        separate practice bookkeeping.
       </Notice>
+      <div className="stat-grid">
+        <article className="stat">
+          <p className="stat-value">{formatMoney(live.expectedRevenue)}</p>
+          <p className="stat-label">Expected service earnings</p>
+        </article>
+        <article className="stat">
+          <p className="stat-value">{formatMoney(live.completedRevenue)}</p>
+          <p className="stat-label">Completed service earnings</p>
+        </article>
+      </div>
+      <h2>Separate sample week</h2>
       <div className="stat-grid stat-grid-3">
         <article className="stat">
           <p className="stat-value">{formatMoney(summary.income)}</p>

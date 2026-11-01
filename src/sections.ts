@@ -30,7 +30,7 @@ export const sections: readonly Section[] = [
   {
     id: 'orders',
     label: 'Orders',
-    description: 'Incoming and active orders',
+    description: 'Create, update, and track sample orders',
     navLabel: 'Orders',
   },
   {
@@ -42,13 +42,13 @@ export const sections: readonly Section[] = [
   {
     id: 'quotes',
     label: 'Quotes & Pricing',
-    description: 'Adjustable fee settings',
+    description: 'Editable practice fees and earnings',
     navLabel: 'Quotes',
   },
   {
     id: 'deliveries',
     label: 'Deliveries',
-    description: 'Daily schedule and stops',
+    description: 'Daily plan and manual stop order',
     navLabel: 'Route',
   },
   {

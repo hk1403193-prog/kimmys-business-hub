@@ -1,9 +1,18 @@
 import { sampleMoneyItems, sampleWeek } from '../sample/data'
+import { summarizeOperations } from '../domain/dashboard'
 import { formatMoney, summarizeMoney } from '../lib/money'
+import { useOperations } from '../state/OperationsProvider'
 import { Notice } from '../components/Notice'
 import { SectionIntro } from '../components/SectionIntro'
 
 export function ReportsView() {
+  const { state } = useOperations()
+  const live = summarizeOperations(
+    state.orders,
+    state.rules,
+    state.workloadRules,
+    state.today,
+  )
   const summary = summarizeMoney(sampleMoneyItems)
   const orders = sampleWeek.reduce((sum, day) => sum + day.orders, 0)
   const tallest = Math.max(...sampleWeek.map((day) => day.income))
@@ -14,7 +23,20 @@ export function ReportsView() {
         A practice picture of business performance. The bars match the sample
         money totals.
       </SectionIntro>
-      <Notice>These results are invented for the layout.</Notice>
+      <Notice>
+        The week chart is a fixed practice snapshot. The earnings below follow
+        the sample orders open in this session.
+      </Notice>
+      <div className="stat-grid">
+        <article className="stat">
+          <p className="stat-value">{formatMoney(live.expectedRevenue)}</p>
+          <p className="stat-label">Expected service earnings</p>
+        </article>
+        <article className="stat">
+          <p className="stat-value">{formatMoney(live.completedRevenue)}</p>
+          <p className="stat-label">Completed service earnings</p>
+        </article>
+      </div>
       <div className="stat-grid">
         <article className="stat">
           <p className="stat-value">{orders}</p>

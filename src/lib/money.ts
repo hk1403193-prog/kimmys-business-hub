@@ -15,6 +15,14 @@ export function formatMoney(amount: number): string {
   }).format(roundMoney(amount))
 }
 
+export function formatSignedMoney(amount: number): string {
+  const rounded = Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(rounded)
+}
+
 export function summarizeMoney(items: readonly SampleMoneyItem[]) {
   const income = roundMoney(
     items

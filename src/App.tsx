@@ -65,7 +65,7 @@ function renderSection(
     case 'customers':
       return <CustomersView />
     case 'quotes':
-      return <QuotesView />
+      return <QuotesView onOpen={onOpen} />
     case 'deliveries':
       return <DeliveriesView />
     case 'money':
