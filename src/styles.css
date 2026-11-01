@@ -635,6 +635,16 @@ button:focus-visible,
   resize: vertical;
 }
 
+.form-alert {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--pink);
+  border-radius: 16px;
+  background: rgba(255, 45, 135, 0.12);
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .fold {
   border: 1px solid var(--line);
   border-radius: 18px;

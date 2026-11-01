@@ -3,6 +3,7 @@ import { summarizeOperations } from '../domain/dashboard'
 import { formatMoney } from '../lib/money'
 import { sections, type SectionId } from '../sections'
 import { useOperations } from '../state/OperationsProvider'
+import { RevenueNote, StatusMeaning } from '../components/ClarityNotes'
 import { Notice } from '../components/Notice'
 import { PracticeStatusPill } from '../components/PracticeStatusPill'
 import { SectionButton } from '../components/SectionButton'
@@ -35,11 +36,19 @@ export function DashboardView({ onOpen }: DashboardViewProps) {
         website was left as it is.
       </Notice>
       <section className="hero" aria-label="Sample day summary">
-        <p className="eyebrow">Today&apos;s sample load</p>
-        <p className="hero-stat">{summary.todayPoints} points</p>
+        <p className="eyebrow">Today&apos;s remaining workload</p>
+        <p className="hero-stat">{summary.todayRemainingPoints} points left</p>
         <p className="hero-copy">
-          {summary.todayMinutes} planning minutes ·{' '}
-          {formatMoney(summary.todayEarnings)} fictional earnings today
+          {summary.todayPoints} points total · {summary.todayCompletedPoints}{' '}
+          points completed
+        </p>
+        <p className="hero-copy">
+          {summary.todayRemainingMinutes} planning minutes left ·{' '}
+          {summary.todayMinutes} total
+        </p>
+        <p className="hero-copy">
+          Delivered orders stay in the remaining load until you mark them
+          Completed.
         </p>
         <div className="hero-actions">
           <button
@@ -73,17 +82,19 @@ export function DashboardView({ onOpen }: DashboardViewProps) {
         </article>
         <article className="stat">
           <p className="stat-value">{formatMoney(summary.expectedRevenue)}</p>
-          <p className="stat-label">Expected earnings</p>
+          <p className="stat-label">Expected service revenue</p>
         </article>
         <article className="stat">
           <p className="stat-value">{formatMoney(summary.completedRevenue)}</p>
-          <p className="stat-label">Completed earnings</p>
+          <p className="stat-label">Completed service revenue</p>
         </article>
         <article className="stat">
           <p className="stat-value">{summary.upcoming.length}</p>
           <p className="stat-label">Upcoming</p>
         </article>
       </div>
+      <RevenueNote />
+      <StatusMeaning />
       <section className="stack" aria-labelledby="upcoming-title">
         <h2 id="upcoming-title">Upcoming deliveries</h2>
         <ul className="card-list">

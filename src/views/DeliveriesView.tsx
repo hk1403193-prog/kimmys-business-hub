@@ -1,11 +1,13 @@
+import { dayWorkload } from '../domain/dashboard'
 import { addDays, formatPracticeDate } from '../domain/dates'
-import { routeForDate } from '../domain/schedule'
+import { completedForDate, routeForDate } from '../domain/schedule'
 import { calculateWorkload } from '../domain/workload'
 import { calculateServiceQuote } from '../domain/pricing'
-import { formatSignedMoney } from '../lib/money'
+import { formatMoney } from '../lib/money'
 import { stepValue } from '../lib/quote'
 import { useState } from 'react'
 import { useOperations } from '../state/OperationsProvider'
+import { StatusMeaning } from '../components/ClarityNotes'
 import { Notice } from '../components/Notice'
 import { PracticeStatusPill } from '../components/PracticeStatusPill'
 import { SectionIntro } from '../components/SectionIntro'
@@ -19,11 +21,8 @@ export function DeliveriesView() {
     date,
     state.routeIdsByDate[date] ?? [],
   )
-  const workload = stops.map((order) =>
-    calculateWorkload(state.workloadRules, order.scenario),
-  )
-  const points = workload.reduce((sum, item) => sum + item.points, 0)
-  const minutes = workload.reduce((sum, item) => sum + item.minutes, 0)
+  const closed = completedForDate(state.orders, date)
+  const load = dayWorkload(state.orders, state.workloadRules, date)
 
   return (
     <div className="stack">
@@ -34,6 +33,7 @@ export function DeliveriesView() {
         Planning minutes are a workload guess. They are not a driving time, and
         no map service is connected.
       </Notice>
+      <StatusMeaning />
       <div className="pair">
         <button
           type="button"
@@ -52,17 +52,28 @@ export function DeliveriesView() {
       </div>
       <section className="hero" aria-label="Sample day plan">
         <p className="eyebrow">{formatPracticeDate(date, state.today)}</p>
-        <p className="hero-stat">{stops.length} stops</p>
+        <p className="hero-stat">
+          {stops.length === 1 ? '1 stop left' : `${stops.length} stops left`}
+        </p>
         <p className="hero-copy">
-          {points} workload points · {minutes} planning minutes
+          {load.remainingPoints} points left · {load.totalPoints} points total ·{' '}
+          {load.completedPoints} points completed
+        </p>
+        <p className="hero-copy">
+          {load.remainingMinutes} planning minutes left · {load.totalMinutes}{' '}
+          total
+        </p>
+        <p className="hero-copy">
+          Delivered orders stay in the remaining stops until you mark them
+          Completed.
         </p>
       </section>
       {stops.length === 0 ? (
-        <p className="card-meta">No sample stops on this day.</p>
+        <p className="card-meta">No open sample stops on this day.</p>
       ) : (
         <ol className="card-list">
           {stops.map((stop, index) => {
-            const work = workload[index]
+            const work = calculateWorkload(state.workloadRules, stop.scenario)
             const earnings = calculateServiceQuote(state.rules, stop.scenario)
 
             return (
@@ -83,7 +94,7 @@ export function DeliveriesView() {
                 </p>
                 <p className="card-body">
                   {work.points} points · {work.minutes} planning minutes ·{' '}
-                  {formatSignedMoney(earnings.earnings)} fictional earnings
+                  {formatMoney(earnings.earnings)} service fee
                 </p>
                 <div className="pair">
                   <button
@@ -108,6 +119,39 @@ export function DeliveriesView() {
           })}
         </ol>
       )}
+      <section className="stack" aria-labelledby="closed-stops-title">
+        <h2 id="closed-stops-title">Completed history</h2>
+        <p className="card-meta">
+          Closed orders stay on the record for this day. They are not upcoming
+          stops.
+        </p>
+        {closed.length === 0 ? (
+          <p className="card-meta">No completed sample orders on this day.</p>
+        ) : (
+          <ul className="card-list">
+            {closed.map((stop) => {
+              const work = calculateWorkload(state.workloadRules, stop.scenario)
+              const earnings = calculateServiceQuote(state.rules, stop.scenario)
+
+              return (
+                <li key={stop.id} className="card">
+                  <div className="card-top">
+                    <p className="card-title">{stop.customer}</p>
+                    <PracticeStatusPill status={stop.status} />
+                  </div>
+                  <p className="card-meta">
+                    {stop.serviceType} · Delivery {stop.deliveryWindow}
+                  </p>
+                  <p className="card-body">
+                    {work.points} completed points · {work.minutes} planning
+                    minutes · {formatMoney(earnings.earnings)} service fee
+                  </p>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
       <details className="fold">
         <summary>Edit planning rules</summary>
         <div className="fold-body">

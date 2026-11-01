@@ -1,3 +1,4 @@
+import { negativeServiceFeeMessage } from '../domain/pricing'
 import { formatMoney, formatSignedMoney } from '../lib/money'
 import type { ServiceQuote } from '../domain/types'
 
@@ -30,16 +31,21 @@ export function QuoteBreakdown({ quote }: { quote: ServiceQuote }) {
       <div className="stat-grid">
         <article className="stat">
           <p className="stat-value">{formatMoney(quote.earnings)}</p>
-          <p className="stat-label">Fictional earnings</p>
+          <p className="stat-label">Service fee</p>
         </article>
         <article className="stat">
           <p className="stat-value">{formatMoney(quote.dueBeforeShopping)}</p>
           <p className="stat-label">Due before shopping</p>
         </article>
       </div>
+      {quote.adjustmentRejected ? (
+        <p className="form-alert" role="alert">
+          {negativeServiceFeeMessage}
+        </p>
+      ) : null}
       <p className="card-meta">
-        Merchandise is the estimated cost of the goods. It is not business
-        revenue. Earnings are the fictional service fees.
+        Merchandise is the estimated cost of the goods. It is not service
+        revenue. The service fee is the fictional charge for the work.
       </p>
     </div>
   )

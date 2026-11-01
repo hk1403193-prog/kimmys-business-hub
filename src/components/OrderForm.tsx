@@ -1,6 +1,8 @@
+import { useState } from 'react'
+import { reconcileScenario } from '../domain/pricing'
 import { stepValue } from '../lib/quote'
 import { formatMoney, formatSignedMoney } from '../lib/money'
-import type { OrderDraft, PricingRules } from '../domain/types'
+import type { OrderDraft, PricingRules, QuoteScenario } from '../domain/types'
 import { deliveryWindows, type Priority } from '../domain/types'
 import type { SampleToggle } from '../sample/types'
 import { Stepper } from './Stepper'
@@ -27,9 +29,15 @@ export function OrderForm({
   onCancel,
 }: OrderFormProps) {
   const serviceLabels = serviceChoices(services, draft.serviceType)
+  const [feeMessage, setFeeMessage] = useState<string | null>(null)
 
-  function updateScenario(patch: Partial<OrderDraft['scenario']>) {
-    onChange({ ...draft, scenario: { ...draft.scenario, ...patch } })
+  function updateScenario(patch: Partial<QuoteScenario>) {
+    const next = { ...draft.scenario, ...patch }
+    const reconciled = reconcileScenario(rules, draft.scenario, next)
+    setFeeMessage(reconciled.notice)
+    if (reconciled.scenario !== draft.scenario) {
+      onChange({ ...draft, scenario: reconciled.scenario })
+    }
   }
 
   return (
@@ -292,6 +300,11 @@ export function OrderForm({
             lessDisabled={draft.scenario.adjustment <= -100}
             moreDisabled={draft.scenario.adjustment >= 100}
           />
+          {feeMessage ? (
+            <p className="form-alert" role="alert">
+              {feeMessage}
+            </p>
+          ) : null}
           <div className="stack">
             <p className="stepper-label">Service area</p>
             {rules.serviceAreas.map((area) => (

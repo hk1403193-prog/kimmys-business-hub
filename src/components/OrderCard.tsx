@@ -57,7 +57,7 @@ export function OrderCard({
       <p className="card-meta">
         {formatPracticeDate(order.requestedDate, today)} · {order.deliveryWindow}
       </p>
-      <p className="card-amount">{formatMoney(quote.earnings)} fictional earnings</p>
+      <p className="card-amount">{formatMoney(quote.earnings)} service fee</p>
       <button
         type="button"
         className="btn btn-secondary"
@@ -107,6 +107,10 @@ export function OrderCard({
             </ol>
           </details>
           <div className="stack">
+            <p className="card-meta">
+              Delivered means physically delivered and still open. Completed
+              means the order is closed.
+            </p>
             {upcoming ? (
               <button
                 type="button"

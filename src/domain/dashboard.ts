@@ -16,6 +16,10 @@ export type OperationsSummary = {
   completedRevenue: number
   todayPoints: number
   todayMinutes: number
+  todayRemainingPoints: number
+  todayRemainingMinutes: number
+  todayCompletedPoints: number
+  todayCompletedMinutes: number
   todayEarnings: number
   upcoming: PracticeOrder[]
 }
@@ -27,6 +31,47 @@ function windowRank(window: string): number {
 
 function sum(values: number[]): number {
   return Math.round(values.reduce((total, value) => total + value, 0) * 100) / 100
+}
+
+export type DayWorkload = {
+  totalPoints: number
+  totalMinutes: number
+  remainingPoints: number
+  remainingMinutes: number
+  completedPoints: number
+  completedMinutes: number
+}
+
+export function dayWorkload(
+  orders: readonly PracticeOrder[],
+  workloadRules: WorkloadRules,
+  date: string,
+): DayWorkload {
+  const jobs = orders.filter(
+    (order) => order.requestedDate === date && order.status !== 'Canceled',
+  )
+  const load = (group: readonly PracticeOrder[]) => {
+    const items = group.map((order) =>
+      calculateWorkload(workloadRules, order.scenario),
+    )
+
+    return {
+      points: sum(items.map((item) => item.points)),
+      minutes: sum(items.map((item) => item.minutes)),
+    }
+  }
+  const total = load(jobs)
+  const remaining = load(jobs.filter((order) => order.status !== 'Completed'))
+  const completed = load(jobs.filter((order) => order.status === 'Completed'))
+
+  return {
+    totalPoints: total.points,
+    totalMinutes: total.minutes,
+    remainingPoints: remaining.points,
+    remainingMinutes: remaining.minutes,
+    completedPoints: completed.points,
+    completedMinutes: completed.minutes,
+  }
 }
 
 export function summarizeOperations(
@@ -45,10 +90,7 @@ export function summarizeOperations(
       item.order.status !== 'Completed' && item.order.status !== 'Canceled',
   )
   const completed = detailed.filter((item) => item.order.status === 'Completed')
-  const todayJobs = detailed.filter(
-    (item) =>
-      item.order.requestedDate === today && item.order.status !== 'Canceled',
-  )
+  const todayLoad = dayWorkload(orders, workloadRules, today)
   const upcoming = detailed
     .filter(
       (item) =>
@@ -74,9 +116,21 @@ export function summarizeOperations(
     completed: completed.length,
     expectedRevenue: sum(expected.map((item) => item.quote.earnings)),
     completedRevenue: sum(completed.map((item) => item.quote.earnings)),
-    todayPoints: sum(todayJobs.map((item) => item.workload.points)),
-    todayMinutes: sum(todayJobs.map((item) => item.workload.minutes)),
-    todayEarnings: sum(todayJobs.map((item) => item.quote.earnings)),
+    todayPoints: todayLoad.totalPoints,
+    todayMinutes: todayLoad.totalMinutes,
+    todayRemainingPoints: todayLoad.remainingPoints,
+    todayRemainingMinutes: todayLoad.remainingMinutes,
+    todayCompletedPoints: todayLoad.completedPoints,
+    todayCompletedMinutes: todayLoad.completedMinutes,
+    todayEarnings: sum(
+      detailed
+        .filter(
+          (item) =>
+            item.order.requestedDate === today &&
+            item.order.status !== 'Canceled',
+        )
+        .map((item) => item.quote.earnings),
+    ),
     upcoming,
   }
 }

@@ -7,7 +7,10 @@ export function routeForDate(
   savedIds: readonly string[] = [],
 ): PracticeOrder[] {
   const visible = orders.filter(
-    (order) => order.requestedDate === date && order.status !== 'Canceled',
+    (order) =>
+      order.requestedDate === date &&
+      order.status !== 'Canceled' &&
+      order.status !== 'Completed',
   )
   const byId = new Map(visible.map((order) => [order.id, order]))
   const ranked = savedIds
@@ -17,6 +20,15 @@ export function routeForDate(
   const rest = visible.filter((order) => !rankedIds.has(order.id))
 
   return [...ranked, ...rest]
+}
+
+export function completedForDate(
+  orders: readonly PracticeOrder[],
+  date: string,
+): PracticeOrder[] {
+  return orders.filter(
+    (order) => order.requestedDate === date && order.status === 'Completed',
+  )
 }
 
 export function reorderRoute(

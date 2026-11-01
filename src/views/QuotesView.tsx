@@ -35,11 +35,16 @@ export function QuotesView({ onOpen }: QuotesViewProps) {
         order in this session.
       </SectionIntro>
       <Notice>
-        These amounts are fictional. Merchandise is kept separate from service
-        earnings. Nothing is billed.
+        These amounts are fictional service fees. Merchandise stays separate.
+        Nothing is billed or collected.
       </Notice>
+      {state.feeNotice ? (
+        <p className="form-alert" role="alert">
+          {state.feeNotice}
+        </p>
+      ) : null}
       <section className="hero" aria-label="Sample quote">
-        <p className="eyebrow">Fictional earnings</p>
+        <p className="eyebrow">Fictional service fee</p>
         <p className="hero-stat">{formatMoney(quote.earnings)}</p>
         <p className="hero-copy">
           Due before shopping {formatMoney(quote.dueBeforeShopping)} · Goods{' '}
@@ -166,6 +171,11 @@ export function QuotesView({ onOpen }: QuotesViewProps) {
             lessDisabled={state.practice.adjustment <= -100}
             moreDisabled={state.practice.adjustment >= 100}
           />
+          {state.feeNotice ? (
+            <p className="form-alert" role="alert">
+              {state.feeNotice}
+            </p>
+          ) : null}
           <button
             type="button"
             className={

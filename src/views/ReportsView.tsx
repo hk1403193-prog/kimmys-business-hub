@@ -2,6 +2,7 @@ import { sampleMoneyItems, sampleWeek } from '../sample/data'
 import { summarizeOperations } from '../domain/dashboard'
 import { formatMoney, summarizeMoney } from '../lib/money'
 import { useOperations } from '../state/OperationsProvider'
+import { RevenueNote, StatusMeaning } from '../components/ClarityNotes'
 import { Notice } from '../components/Notice'
 import { SectionIntro } from '../components/SectionIntro'
 
@@ -19,44 +20,46 @@ export function ReportsView() {
 
   return (
     <div className="stack">
-      <SectionIntro eyebrow="Sample week" title="Reports">
-        A practice picture of business performance. The bars match the sample
-        money totals.
+      <SectionIntro title="Reports">
+        Service revenue from this practice session, plus one fixed illustrative
+        week.
       </SectionIntro>
       <Notice>
-        The week chart is a fixed practice snapshot. The earnings below follow
-        the sample orders open in this session.
+        The chart below is a fixed illustration. It does not change when sample
+        orders change.
       </Notice>
+      <StatusMeaning />
       <div className="stat-grid">
         <article className="stat">
           <p className="stat-value">{formatMoney(live.expectedRevenue)}</p>
-          <p className="stat-label">Expected service earnings</p>
+          <p className="stat-label">Expected service revenue</p>
         </article>
         <article className="stat">
           <p className="stat-value">{formatMoney(live.completedRevenue)}</p>
-          <p className="stat-label">Completed service earnings</p>
+          <p className="stat-label">Completed service revenue</p>
         </article>
       </div>
+      <RevenueNote />
       <div className="stat-grid">
         <article className="stat">
           <p className="stat-value">{orders}</p>
-          <p className="stat-label">Sample orders</p>
+          <p className="stat-label">Illustrative orders</p>
         </article>
         <article className="stat">
           <p className="stat-value">{formatMoney(summary.income)}</p>
-          <p className="stat-label">Sample income</p>
+          <p className="stat-label">Illustrative income</p>
         </article>
         <article className="stat">
           <p className="stat-value">{formatMoney(summary.profit)}</p>
-          <p className="stat-label">Sample profit</p>
+          <p className="stat-label">Illustrative profit</p>
         </article>
         <article className="stat">
           <p className="stat-value">{formatMoney(summary.income / orders)}</p>
-          <p className="stat-label">Average ticket</p>
+          <p className="stat-label">Illustrative average</p>
         </article>
       </div>
       <section className="stack" aria-labelledby="week-title">
-        <h2 id="week-title">Sample income by day</h2>
+        <h2 id="week-title">Illustrative income by day</h2>
         <div className="card">
           <div
             className="bars"

@@ -130,6 +130,7 @@ export type ServiceQuote = {
   serviceSubtotal: number
   discount: number
   adjustment: number
+  adjustmentRejected: boolean
   merchandiseTotal: number
   earnings: number
   dueBeforeShopping: number
