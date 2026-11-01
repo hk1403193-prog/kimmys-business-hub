@@ -690,6 +690,96 @@ button:focus-visible,
   font-size: 0.98rem;
 }
 
+.session-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #120910;
+  color: #ffe4f1;
+}
+
+.session-bar p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.session-bar .btn {
+  min-height: 44px;
+  padding: 8px 14px;
+}
+
+.auth-screen {
+  min-height: 100dvh;
+}
+
+.auth-main {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+
+.auth-card {
+  gap: 14px;
+}
+
+.auth-card h1 {
+  font-size: 2rem;
+}
+
+.auth-form,
+.auth-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-card .btn,
+.auth-actions .btn {
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+}
+
+.auth-error {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 45, 135, 0.16);
+  color: #ffe4f1;
+  font-weight: 800;
+}
+
+.qr-frame {
+  justify-self: center;
+  padding: 12px;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.qr-frame img {
+  display: block;
+  width: min(220px, 72vw);
+  height: auto;
+}
+
+.secret-box {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #0d0d0d;
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+a.btn {
+  display: grid;
+  place-items: center;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn:active,
   .chip:active,

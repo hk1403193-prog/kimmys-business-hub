@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from './auth/AuthProvider'
 import { AppShell } from './components/AppShell'
 import { isSectionId, type SectionId } from './sections'
 import { CustomersView } from './views/CustomersView'
@@ -18,6 +19,7 @@ function readSection(): SectionId {
 }
 
 export function App() {
+  const { email, signOut } = useAuth()
   const [section, setSection] = useState<SectionId>(readSection)
   const [moreOpen, setMoreOpen] = useState(false)
 
@@ -44,6 +46,8 @@ export function App() {
     <AppShell
       section={section}
       moreOpen={moreOpen}
+      email={email}
+      onSignOut={() => void signOut()}
       onOpen={openSection}
       onMore={() => setMoreOpen(true)}
       onCloseMore={() => setMoreOpen(false)}

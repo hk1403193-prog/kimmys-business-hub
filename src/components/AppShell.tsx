@@ -7,6 +7,8 @@ import { MoreSheet } from './MoreSheet'
 type AppShellProps = {
   section: SectionId
   moreOpen: boolean
+  email: string | null
+  onSignOut: () => void
   onOpen: (id: SectionId) => void
   onMore: () => void
   onCloseMore: () => void
@@ -16,6 +18,8 @@ type AppShellProps = {
 export function AppShell({
   section,
   moreOpen,
+  email,
+  onSignOut,
   onOpen,
   onMore,
   onCloseMore,
@@ -30,6 +34,12 @@ export function AppShell({
         <p className="sample-strip">
           Fictional sample data · Not saved
         </p>
+        <div className="session-bar">
+          <p>Owner signed in{email ? ` · ${email}` : ''}</p>
+          <button className="btn btn-secondary" type="button" onClick={onSignOut}>
+            Sign out
+          </button>
+        </div>
         <BrandHeader compact={section !== 'dashboard'} />
         <main id="content" className="main">
           <div className="wrap">{children}</div>

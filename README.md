@@ -55,23 +55,28 @@ Every customer, phone, address, order, fee, and dollar amount is practice data. 
 ## What is not connected
 
 - The live customer website, its host, its domain, and its customer records
-- A database
-- Accounts or login
-- A payment company
-- Text messages
-- Maps or real driving times
+- Payments, text messages, and maps
 - Deployment or paid services
-- Passwords, API keys, or other secrets
+- Secret keys
+
+Owner sign-in uses the practice Supabase project when the public URL and publishable key are in `.env.local` on this computer. Practice orders on the screens still live in this browser session until you refresh. A separate fictional lock table is defined in SQL for you to run yourself in the practice project. It is not customer data.
 
 ## Phase 3
 
-Phase 3 is owner login, before any real business records are added. It is not started. Customer accounts, saved records, payments, and any change involving the live website wait for a later approval.
+Phase 3.0 adds owner sign-in around the same command center. The screens stay closed until the practice account is the owner and an authenticator code has been accepted.
+
+Setup, the owner-role step, the practice database lock, and the Android steps are in [docs/phase-3-owner-auth.md](docs/phase-3-owner-auth.md) and [docs/phase-3-android.md](docs/phase-3-android.md).
+
+Before `npm run dev`, copy `.env.example` to `.env.local` and fill in the two public values. That file stays on this computer. Without it, the preview shows setup instructions and does not open the command center.
+
+Password reset does not turn off the authenticator. This app does not edit account JSON, and it does not contain the Supabase secret key. Customer accounts, saved business records, payments, and any change involving the live website wait for a later approval.
 
 ## Project structure
 
 ```text
 index.html                 Page shell
-src/App.tsx                Chooses the open section
+src/App.tsx                Chooses the open section, after sign-in
+src/auth/                  Owner sign-in, authenticator, and access checks
 src/styles.css             Colors, layout, and phone styling
 src/domain/                Practice orders, quotes, workload, and the day plan
 src/state/                 In-memory session shared by every screen
@@ -79,6 +84,8 @@ src/components/            Shared header, buttons, and forms
 src/views/                 One file for each section
 src/sample/                Original Phase 1 practice figures
 src/lib/                   Helpers kept from Phase 1
+supabase/migrations/       Practice lock SQL, run by you in the practice project
+docs/                      Phase 3 setup and Android steps
 ```
 
 ## Safety rule
