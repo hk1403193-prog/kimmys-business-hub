@@ -1,0 +1,31 @@
+# Practice site on Cloudflare Pages. This file is not a secret.
+# A 200 line serves the app and keeps the phone address the same.
+# That is required for Forgot password, the reset link, and a direct section address.
+# Do not replace these lines with a catch-all. A catch-all would also replace the JavaScript, CSS, and icon.
+# Do not add 404.html. Pages would stop its own single-page fallback.
+/login /index.html 200
+/login/ /index.html 200
+/recover /index.html 200
+/recover/ /index.html 200
+/auth/update-password /index.html 200
+/auth/update-password/ /index.html 200
+/dashboard /index.html 200
+/dashboard/ /index.html 200
+/orders /index.html 200
+/orders/ /index.html 200
+/customers /index.html 200
+/customers/ /index.html 200
+/quotes /index.html 200
+/quotes/ /index.html 200
+/deliveries /index.html 200
+/deliveries/ /index.html 200
+/money /index.html 200
+/money/ /index.html 200
+/partners /index.html 200
+/partners/ /index.html 200
+/marketing /index.html 200
+/marketing/ /index.html 200
+/reports /index.html 200
+/reports/ /index.html 200
+/settings /index.html 200
+/settings/ /index.html 200

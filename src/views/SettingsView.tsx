@@ -1,3 +1,6 @@
+import { useState } from 'react'
+import { useAuth } from '../auth/AuthProvider'
+import { notesStatusMessage } from '../auth/notes'
 import { useOperations } from '../state/OperationsProvider'
 import { Notice } from '../components/Notice'
 import { SectionIntro } from '../components/SectionIntro'
@@ -5,7 +8,17 @@ import { SwitchRow } from '../components/SwitchRow'
 
 export function SettingsView() {
   const { state, toggleHours, toggleService, toggleArea } = useOperations()
+  const { email, signOut, readPracticeNotes } = useAuth()
   const { hours, services, areas } = state
+  const [lockMessage, setLockMessage] = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+
+  async function checkLock() {
+    setChecking(true)
+    const result = await readPracticeNotes()
+    setChecking(false)
+    setLockMessage(notesStatusMessage(result))
+  }
 
   return (
     <div className="stack">
@@ -15,7 +28,37 @@ export function SettingsView() {
       </SectionIntro>
       <Notice>
         Nothing here is published. Card processing stays disconnected.
+        Records on this screen stay fictional.
       </Notice>
+      <section className="stack" aria-labelledby="account-title">
+        <h2 id="account-title">Owner account</h2>
+        <article className="card">
+          <p className="card-title">{email ?? 'Owner account'}</p>
+          <p className="card-body">
+            Sign-out closes the command center on this device. It does not
+            remove the authenticator.
+          </p>
+          <button className="btn btn-secondary" type="button" onClick={() => void signOut()}>
+            Sign out
+          </button>
+        </article>
+        <article className="card">
+          <p className="card-title">Practice database lock</p>
+          <p className="card-body">
+            This checks the fictional practice-notes table. It is allowed only
+            for the verified owner. Customer records are not stored here.
+          </p>
+          <button
+            className="btn btn-secondary"
+            type="button"
+            disabled={checking}
+            onClick={() => void checkLock()}
+          >
+            {checking ? 'Checking…' : 'Check protected table'}
+          </button>
+          {lockMessage ? <p className="card-body">{lockMessage}</p> : null}
+        </article>
+      </section>
       <section className="stack" aria-labelledby="hours-title">
         <h2 id="hours-title">Hours</h2>
         {hours.map((item) => (

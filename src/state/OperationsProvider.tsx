@@ -18,6 +18,8 @@ import type {
   QuoteScenario,
   WorkloadRules,
 } from '../domain/types'
+import type { OwnerProof } from '../auth/access'
+import { guardedDispatch } from '../auth/guard'
 
 type OperationsApi = {
   state: OperationsState
@@ -37,7 +39,13 @@ type OperationsApi = {
 
 const OperationsContext = createContext<OperationsApi | null>(null)
 
-export function OperationsProvider({ children }: { children: ReactNode }) {
+export function OperationsProvider({
+  proof,
+  children,
+}: {
+  proof: OwnerProof
+  children: ReactNode
+}) {
   const [state, dispatch] = useReducer(
     operationsReducer,
     localISODate(),
@@ -45,26 +53,27 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
   )
   const api = useMemo<OperationsApi>(() => {
     const at = () => new Date().toISOString()
+    const send = (action: Parameters<typeof dispatch>[0]) => {
+      guardedDispatch(proof, dispatch, action)
+    }
 
     return {
       state,
-      createOrder: (draft) => dispatch({ type: 'create', draft, at: at() }),
-      updateOrder: (id, draft) =>
-        dispatch({ type: 'update', id, draft, at: at() }),
-      setStatus: (id, status) =>
-        dispatch({ type: 'status', id, status, at: at() }),
+      createOrder: (draft) => send({ type: 'create', draft, at: at() }),
+      updateOrder: (id, draft) => send({ type: 'update', id, draft, at: at() }),
+      setStatus: (id, status) => send({ type: 'status', id, status, at: at() }),
       reorder: (date, index, direction) =>
-        dispatch({ type: 'reorder', date, index, direction }),
-      updateRules: (rules) => dispatch({ type: 'rules', rules }),
-      updateWorkload: (rules) => dispatch({ type: 'workload', rules }),
-      updatePractice: (scenario) => dispatch({ type: 'practice', scenario }),
-      armDraft: () => dispatch({ type: 'arm-draft' }),
-      clearDraft: () => dispatch({ type: 'clear-draft' }),
-      toggleHours: (day) => dispatch({ type: 'toggle-hours', day }),
-      toggleService: (id) => dispatch({ type: 'toggle-service', id }),
-      toggleArea: (id) => dispatch({ type: 'toggle-area', id }),
+        send({ type: 'reorder', date, index, direction }),
+      updateRules: (rules) => send({ type: 'rules', rules }),
+      updateWorkload: (rules) => send({ type: 'workload', rules }),
+      updatePractice: (scenario) => send({ type: 'practice', scenario }),
+      armDraft: () => send({ type: 'arm-draft' }),
+      clearDraft: () => send({ type: 'clear-draft' }),
+      toggleHours: (day) => send({ type: 'toggle-hours', day }),
+      toggleService: (id) => send({ type: 'toggle-service', id }),
+      toggleArea: (id) => send({ type: 'toggle-area', id }),
     }
-  }, [state])
+  }, [state, proof])
 
   return (
     <OperationsContext.Provider value={api}>
