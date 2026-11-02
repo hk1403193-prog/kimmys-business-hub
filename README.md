@@ -28,19 +28,11 @@ Expected service revenue is the service fees on orders that are still open. Comp
 
 ## How to try each part
 
-On a computer, in this folder:
+The owner steps are for an Android phone, in Chrome. They are in [docs/phase-3-android.md](docs/phase-3-android.md).
 
-```bash
-npm install
-npm test
-npm run typecheck
-npm run build
-npm run dev
-```
+The practice site is not published yet. After a later approved deployment, the phone opens the practice address in Chrome and signs in there.
 
-`npm run dev` opens a local preview on that computer only. It is not published.
-
-Then, in the preview:
+On the phone, after sign-in and the authenticator code:
 
 - **Orders:** tap Create sample order, save it, search for the fictional name, and tap Advance or Mark completed. Delivered stays open. Completed closes the order and removes it from upcoming deliveries.
 - **Quotes:** open Edit fee rules, change the base fee, and watch the service fee change. Merchandise stays separate. A manual adjustment that would drop the service fee below zero is refused.
@@ -56,25 +48,40 @@ Every customer, phone, address, order, fee, and dollar amount is practice data. 
 
 - The live customer website, its host, its domain, and its customer records
 - Payments, text messages, and maps
-- Deployment or paid services
+- A published practice site, a Cloudflare project, or a paid service
 - Secret keys
 
-Owner sign-in uses the practice Supabase project when the public URL and publishable key are in `.env.local` on this computer. Practice orders on the screens still live in this browser session until you refresh. A separate fictional lock table is defined in SQL for you to run yourself in the practice project. It is not customer data.
+Owner sign-in uses the practice Supabase project when a practice build includes the public project address and the publishable key. Practice orders on the screens still live in the phone browser until you refresh. A separate fictional lock table is defined in SQL for you to run yourself in the practice project. It is not customer data.
 
 ## Phase 3
 
 Phase 3.0 adds owner sign-in around the same command center. The screens stay closed until the practice account is the owner and an authenticator code has been accepted.
 
-Setup, the owner-role step, the practice database lock, and the Android steps are in [docs/phase-3-owner-auth.md](docs/phase-3-owner-auth.md) and [docs/phase-3-android.md](docs/phase-3-android.md).
+The Android steps are in [docs/phase-3-android.md](docs/phase-3-android.md). The owner role, authenticator rules, practice database lock, and security review are in [docs/phase-3-owner-auth.md](docs/phase-3-owner-auth.md). The future Cloudflare Pages address, build settings, and Supabase redirect lines are in [docs/phase-3-pages.md](docs/phase-3-pages.md).
 
-Before `npm run dev`, copy `.env.example` to `.env.local` and fill in the two public values. That file stays on this computer. Without it, the preview shows setup instructions and does not open the command center.
+The two public build values use the names in `.env.example`. They are not committed. Without them, the site shows setup instructions and does not open the command center.
 
-Password reset does not turn off the authenticator. This app does not edit account JSON, and it does not contain the Supabase secret key. Customer accounts, saved business records, payments, and any change involving the live website wait for a later approval.
+Password reset does not turn off the authenticator. This app does not edit account JSON, and it does not contain the Supabase secret key. Direct links such as the password page and `/orders` are listed in `public/_redirects` so a static practice host can open the app. Customer accounts, saved business records, payments, and any change involving the live website wait for a later approval.
+
+## Checks used to prepare a build
+
+These commands are for preparing the app. They are not the phone steps.
+
+```bash
+npm install
+npm test
+npm run typecheck
+npm run build
+```
+
+`npm run build` writes a `dist` folder. That folder is not committed. Publishing it waits for a separate approval.
 
 ## Project structure
 
 ```text
 index.html                 Page shell
+public/_redirects          Practice-site addresses that open the app
+.node-version              Node.js version for a later Pages build
 src/App.tsx                Chooses the open section, after sign-in
 src/auth/                  Owner sign-in, authenticator, and access checks
 src/styles.css             Colors, layout, and phone styling
@@ -85,7 +92,7 @@ src/views/                 One file for each section
 src/sample/                Original Phase 1 practice figures
 src/lib/                   Helpers kept from Phase 1
 supabase/migrations/       Practice lock SQL, run by you in the practice project
-docs/                      Phase 3 setup and Android steps
+docs/                      Phone guide, owner setup, and the future practice site
 ```
 
 ## Safety rule

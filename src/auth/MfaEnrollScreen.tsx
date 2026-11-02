@@ -62,9 +62,10 @@ export function MfaEnrollScreen({ demo }: { demo?: EnrollmentStart }) {
   return (
     <AuthLayout title="Set up your authenticator" eyebrow="Authenticator">
       <p>
-        Install an authenticator app on your phone. Scan this code, or enter
-        the setup key. Then enter the 6-digit code from the app. The command
-        center stays closed until that code is accepted.
+        Install an authenticator app on this phone. Copy the setup key into
+        that app. A QR code on this same screen cannot be scanned by this
+        phone. Then enter the 6-digit code. The command center stays closed
+        until that code is accepted.
       </p>
       {demo ? (
         <p className="notice">

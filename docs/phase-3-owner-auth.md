@@ -1,88 +1,90 @@
 # Phase 3.0 — Owner sign-in
 
-This is the practice command center in this repository. It is not the live customer website.
+This is the practice command center. It is not the live customer website.
 
 The command center stays closed until all of these are true:
 
-1. This computer has the practice project's public URL and publishable key.
+1. The practice build includes the public project address and the publishable key.
 2. You sign in with the administrator-created account.
 3. That account's **app metadata** role is `owner`.
 4. An authenticator app has verified this sign-in (assurance level `aal2`).
 
-Practice orders on the screens are still fictional and still disappear on refresh. The optional database table below is also fictional. It is not a customer list.
+Practice orders on the screens are fictional and disappear when you refresh. The optional database table below is also fictional. It is not a customer list.
 
-Nothing in this phase is deployed. Do not merge until you have reviewed it. Do not point it at `https://kimmysdelivery.com`.
+Nothing in this phase is deployed. Review it before any merge or publication. Keep it off `https://kimmysdelivery.com`.
 
-## 1. Public values, on this computer only
+Phone steps are in [phase-3-android.md](phase-3-android.md). The future practice address and the Supabase redirect lines are in [phase-3-pages.md](phase-3-pages.md).
+
+## 1. Public build values
 
 In the Supabase dashboard, open the practice project **kimmys-hub-practice**.
 
 Go to **Project Settings → API Keys**.
 
-Copy two public values:
+Two public values are used:
 
 - Project URL
 - Publishable key
 
-Do not copy the secret key. Do not copy the service-role key. Do not paste either public value into chat.
+The secret key stays in the dashboard. The service-role key stays in the dashboard. Neither one goes in GitHub, in chat, or in the Pages build settings.
 
-On this computer, in the project folder, copy `.env.example` to a new file named `.env.local`. Put the values on these lines:
+For Cloud Agents, those two public values are already saved under these names:
 
 ```text
-VITE_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
-`.env.local` is ignored by Git. Restart `npm run dev` after saving it.
+A saved project URL that ends in `/rest/v1/` is accepted. The app connects to the project address and ignores that ending. Any other extra path is refused.
 
-If the key is refused, the preview says so and the command center stays closed. A secret key is refused on purpose.
+A later Pages production build needs the same two names. The names and a blank example are in `.env.example`.
+
+If the values are missing, wrong, or are a secret key, the practice site explains that and the command center stays closed.
 
 ## 2. Dashboard settings to confirm
 
-In **kimmys-hub-practice** only:
+In **kimmys-hub-practice** only. You can do this in Chrome on the phone.
 
 - **Authentication → Sign In / Providers → Email** is enabled.
 - New user sign-ups stay disabled.
-- **Authentication → Multi-Factor → TOTP** is enabled.
-- Leave phone and SMS factors off. This app does not use them.
+- **Authentication → Multi-Factor → TOTP** is enabled. The app calls this the authenticator.
+- Phone and SMS factors stay off.
 - If a minimum password length is offered, set it to at least 8.
 
 ### Redirect URLs
 
-Open **Authentication → URL Configuration**.
+Open **Authentication → URL Configuration** and use the practice address from [phase-3-pages.md](phase-3-pages.md).
 
-Set **Site URL** to:
-
-```text
-http://localhost:5173
-```
-
-Add this **Redirect URL**:
+For the suggested name, **Site URL** is:
 
 ```text
-http://localhost:5173/auth/update-password
+https://kimmys-hub-practice.pages.dev
 ```
 
-Do not add `https://kimmysdelivery.com`, `https://www.kimmysdelivery.com`, or any other live address.
+The only extra **Redirect URL** is:
 
-If a reset link's address is not on the allow list, Supabase falls back to the Site URL. That is why the Site URL must be this local preview and must not be the live website.
+```text
+https://kimmys-hub-practice.pages.dev/auth/update-password
+```
 
-The app also refuses to build a reset link whose host is the live customer site.
+Do not add `https://kimmysdelivery.com`, `https://www.kimmysdelivery.com`, `http://localhost:5173`, or a star pattern such as `https://*.pages.dev/**`.
+
+The app also refuses to build a reset link whose host is the live customer site. A reset link for any other plain `http://` address is refused too. The practice site uses `https://`.
 
 ## 3. Assign the owner role yourself
 
-The app only **reads** `app_metadata.role`. It does not change your user JSON.
+The app only reads `app_metadata.role`. It does not change your user JSON.
 
-Do not put the role in **User Metadata**. The app ignores that field, and so does the database lock.
+The role in **User Metadata** is ignored by the app and by the database lock. Put the role in **Raw App Meta Data**.
 
 ### Dashboard
 
 1. Open **Authentication → Users**.
 2. Open the existing administrator-created account.
-3. Edit **Raw App Meta Data** (not User Metadata).
-4. Keep every existing key, including `provider` and `providers`. Add `"role": "owner"`.
+3. Edit **Raw App Meta Data**.
+4. Keep every existing key, including `provider` and `providers`. Add `"role": "owner"` in lowercase.
 
-Example, if the current JSON is:
+Example, when the current JSON is:
 
 ```json
 {
@@ -101,9 +103,13 @@ Save this, with those keys still present:
 }
 ```
 
-5. Sign out of the command center and sign in again so the new claim is in the session.
+5. Sign out of the command center and sign in again so the new role is in the session.
+
+`Owner`, `OWNER`, and `owner ` with a space are not accepted. The word is `owner`.
 
 ### SQL editor, if you prefer a merge
+
+This repository does not run the statement. Run it yourself in **kimmys-hub-practice** only, if you want the dashboard edit done as SQL.
 
 Run the select first. It should return one row. If it returns none, or more than one, stop.
 
@@ -124,39 +130,40 @@ where email = 'OWNER_EMAIL_HERE';
 
 Select the row again. `provider` and `providers` should still be there, and `role` should be `owner`.
 
-Replace `OWNER_EMAIL_HERE` with the existing account's email. Run this only in **kimmys-hub-practice**.
+Replace `OWNER_EMAIL_HERE` with the existing account's email.
 
 ## 4. Practice database lock
 
 The file `supabase/migrations/20261101120000_practice_owner_lock.sql` creates one table, `practice_owner_notes`.
 
-- Row level security is on, and forced.
+This repository does not run that file.
+
+- Row level security is on, and forced, so the table owner does not skip it.
 - `anon` has no privileges.
-- A row can be read or written only when the JWT role is `authenticated`, the assurance level is `aal2`, and `app_metadata.role` is `owner`.
-- Every note must start with `FICTIONAL:`.
-- There is no policy that reads user metadata.
+- `public` has no privileges.
+- A row can be read or written only when the signed-in role is `authenticated`, the assurance level is `aal2`, and `app_metadata.role` is `owner`.
+- Every note must start with `FICTIONAL:` in uppercase, and the note length is limited.
+- The SQL does not read user metadata.
 
-The app does not run this SQL. In the practice project, open **SQL Editor**, paste the file, and run it there. Do not run it in any other project.
+When you choose to install it, open **SQL Editor** in the practice project, paste the file, and run it there. Do not run it in any other project.
 
-There is no customer table. The in-screen orders stay in the browser.
+There is no customer table. The orders on the screens stay in the browser until you refresh.
 
-After you are signed in and the authenticator has been accepted, **Settings → Check protected table** asks the practice project for that table. It shows a count. It does not print note text. If the SQL has not been run, the screen says the lock is not installed yet. The rest of the practice screens still work.
+After you are signed in and the authenticator has been accepted, **Settings → Check protected table** asks the practice project for that table. It shows a count. It does not print note text on the screen. If the SQL has not been run, the screen says the lock is not installed yet. The rest of the practice screens still work.
 
-The Supabase service role bypasses these policies. That key stays in the dashboard. It must not be placed in this app or in GitHub.
+The Supabase service role bypasses these policies. That key stays in the dashboard.
 
 ## 5. Authenticator
 
-See [phase-3-android.md](phase-3-android.md) for the phone steps.
+See [phase-3-android.md](phase-3-android.md).
 
-First sign-in, before an authenticator is enrolled, shows the QR code and setup key. The command center is not on that screen.
+The first sign-in, before an authenticator is enrolled, shows the setup key. The command center is not on that screen.
 
 Later sign-ins ask for the current 6-digit code.
 
-Password reset saves a new password and then still asks for the code. There is no "skip" control.
+Password reset saves a new password and then still asks for the code. There is no skip control. The app can clear an unfinished setup. It does not remove an authenticator that has already been verified.
 
 ### Lost or replaced phone
-
-This app cannot remove the factor.
 
 1. Sign in to the Supabase dashboard.
 2. Open **Authentication → Users** and the owner account.
@@ -165,11 +172,23 @@ This app cannot remove the factor.
 
 That is an administrator action in the dashboard. It is not a bypass inside the app.
 
-## 6. What stays disconnected
+## 6. Security review
+
+This review covers the owner role, authenticator enrollment, and the practice-table rules. It did not change the live website, run SQL, or call Supabase with a secret key.
+
+**Owner role.** Access looks at app metadata only. A role typed into user metadata does not open the command center and does not pass the practice-table check. The browser app cannot write app metadata with the publishable key. The role still has to be saved in the dashboard before the first successful sign-in. This review cannot see that account.
+
+**Authenticator.** The command center opens only at assurance level `aal2`. Before any authenticator exists, the app shows enrollment. After one is verified, it asks for the current code. There is no button that skips the code. Saving a new password does not remove a verified authenticator. The dev-only layout preview is not included in a production build.
+
+**Practice table.** The SQL turns on row level security, forces it, removes `anon` and `public` privileges, and allows a row only for an authenticated owner at `aal2`. Notes must start with `FICTIONAL:`. The service-role key would bypass the policies, so it is kept out of the app. The table does nothing until you run the SQL yourself.
+
+**What the sign-in gate covers.** It closes the screens during a normal visit. The fictional sample orders are part of the app download, and a refresh puts the original sample back. They are not a private customer database. Real customer records are not in this app.
+
+**Password recovery.** The link has to come back to `/auth/update-password` on the practice address, in the same Chrome window, because the reset proof is stored in that browser. `public/_redirects` is what lets that address open the app on Pages instead of a missing-page error. The same file covers a direct visit to `/orders` or the other sections.
+
+## 7. What stays disconnected
 
 - `https://kimmysdelivery.com`, its host, its DNS, and its customer records
 - Payments, text messages, and maps
-- Deployment, preview hosting, and Cloudflare
+- A Cloudflare project, a deployment, and any paid service
 - Secret keys and service-role keys
-
-`npm run dev` is a preview on this computer. It is not a publication.

@@ -266,6 +266,10 @@ describe('owner authentication', () => {
     expect(safeRecoveryRedirect('http://localhost:5173')).toBe(
       'http://localhost:5173/auth/update-password',
     )
+    expect(safeRecoveryRedirect('https://kimmys-hub-practice.pages.dev')).toBe(
+      'https://kimmys-hub-practice.pages.dev/auth/update-password',
+    )
+    expect(() => safeRecoveryRedirect('http://192.168.1.20:5173')).toThrow(/https/)
     expect(() => safeRecoveryRedirect('https://kimmysdelivery.com')).toThrow(/live customer website/)
     expect(() => safeRecoveryRedirect('https://www.kimmysdelivery.com')).toThrow(/live customer website/)
     expect(() => safeRecoveryRedirect('https://shop.kimmysdelivery.com')).toThrow(/live customer website/)
@@ -274,8 +278,24 @@ describe('owner authentication', () => {
       readSupabasePublicConfig({
         VITE_SUPABASE_URL: 'https://example.supabase.co',
         VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_local_preview_only',
-      }).ok,
-    ).toBe(true)
+      }),
+    ).toEqual({
+      ok: true,
+      url: 'https://example.supabase.co',
+      publishableKey: 'sb_publishable_local_preview_only',
+    })
+    expect(
+      readSupabasePublicConfig({
+        VITE_SUPABASE_URL: 'https://example.supabase.co/rest/v1/',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_local_preview_only',
+      }),
+    ).toMatchObject({ ok: true, url: 'https://example.supabase.co' })
+    expect(
+      readSupabasePublicConfig({
+        VITE_SUPABASE_URL: 'https://example.supabase.co/auth/v1',
+        VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_local_preview_only',
+      }),
+    ).toEqual({ ok: false, problem: 'invalid-url' })
     expect(
       readSupabasePublicConfig({
         VITE_SUPABASE_URL: 'https://kimmysdelivery.com',
@@ -381,6 +401,11 @@ describe('protected practice table', () => {
       role: 'authenticated',
       aal: 'aal2',
       app_metadata: { role: 'owner ' },
+    })).toBe(false)
+    expect(canUseProtectedTable({
+      role: 'authenticated',
+      aal: 'aal2',
+      app_metadata: { role: 'Owner' },
     })).toBe(false)
   })
 
