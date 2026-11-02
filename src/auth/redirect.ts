@@ -1,6 +1,11 @@
 import { isLiveCustomerHost } from './liveSite'
 import { UPDATE_PASSWORD_PATH } from './gate'
 
+function isLoopback(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/\.$/, '')
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1'
+}
+
 export function safeRecoveryRedirect(origin: string): string {
   let url: URL
   try {
@@ -15,6 +20,10 @@ export function safeRecoveryRedirect(origin: string): string {
 
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     throw new Error('Recovery redirect must use http or https.')
+  }
+
+  if (url.protocol === 'http:' && !isLoopback(url.hostname)) {
+    throw new Error('Recovery redirect must use https.')
   }
 
   if (url.username || url.password || url.search || url.hash) {

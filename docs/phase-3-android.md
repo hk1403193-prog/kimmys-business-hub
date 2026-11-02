@@ -1,101 +1,83 @@
-# Android setup for the owner authenticator
+# Use Kimmy's Business Hub on your Android phone
 
-Use this with the practice command center on your computer. It does not change `https://kimmysdelivery.com`.
+This is the phone guide. It does not use a computer. It does not change `https://kimmysdelivery.com`.
 
-The authenticator proves it is you after the password. The command center does not open until the 6-digit code is accepted.
+The practice website is not published yet. Follow these steps after you approve a practice deployment. Until then, there is no address to open on the phone.
 
-## Install an authenticator
+## Before the first visit
 
-On the Android phone, install one authenticator from the Play Store:
+You need:
 
-- Google Authenticator, or
-- Aegis Authenticator
+1. The practice address from Cloudflare Pages. The suggested address is `https://kimmys-hub-practice.pages.dev`. If Cloudflare shows a different `pages.dev` address, use that one. The exact Supabase settings are in [phase-3-pages.md](phase-3-pages.md).
+2. The owner email and password created in the practice project **kimmys-hub-practice**.
+3. One authenticator app from the Play Store: **Google Authenticator** or **Aegis Authenticator**. Open the Play Store yourself. Skip any authenticator offered in an ad or a text message.
 
-Open the app store listing from the Play Store yourself. Do not install an "authenticator" from an ad or a text message.
+Use **Chrome** for every step below. When an email link arrives, open it in that same Chrome window.
 
-You only need one of those apps.
+## Sign in
 
-## On the computer, before the phone
+1. Open the practice address in Chrome.
+2. Sign in with the owner email and password.
+3. Orders, customers, and the other sections stay hidden until the authenticator step is finished.
 
-1. Finish the practice-project steps in [phase-3-owner-auth.md](phase-3-owner-auth.md).
-2. The owner role must already be in **app metadata**.
-3. In this project folder, run:
+If the page says the practice site was built without its public values, stop. Do not type keys into the page.
 
-```bash
-npm install
-npm run dev
-```
+## Add the authenticator on this same phone
 
-4. Open the local address Vite prints, usually `http://localhost:5173`.
-5. Sign in with the existing owner email and password.
+The QR code is on this phone, so the camera cannot scan it.
 
-The next screen is **Set up your authenticator**. It shows a QR code and a setup key. The orders, customers, and other sections are not on this screen.
+1. On **Set up your authenticator**, tap **Copy setup key**.
+2. Switch to the authenticator app.
+3. Add an account and choose **Enter a setup key**.
+4. Account name: `Kimmy's Business Hub`.
+5. Paste the setup key. If the app asks, choose time-based and 6 digits.
+6. Switch back to Chrome.
+7. Type the current 6-digit code and tap **Verify code**.
 
-## Add the account on the phone
+The code changes about every 30 seconds. If a code is refused, wait for the next one and use that.
 
-1. Open the authenticator app.
-2. Add an account.
-3. Scan the QR code on the computer screen.
-
-If the camera cannot scan it:
-
-1. Choose **Enter a setup key**.
-2. Account name: `Kimmy's Business Hub`.
-3. Type the setup key from the computer. The spaces are only there to make it readable. You can also tap **Copy setup key** and type it without spaces.
-4. Time-based, 6 digits, if the app asks.
-
-The phone then shows a 6-digit code. It changes about every 30 seconds.
-
-## Confirm the code
-
-1. On the computer, type the current code into **6-digit code**.
-2. Tap **Verify code**.
-
-When the code is accepted, the command center opens. The pink bar still says **Fictional sample data · Not saved**.
-
-If the code is refused, wait for the next code and try that one. Do not reuse a code that just expired.
+When the code is accepted, the command center opens. The pink bar says **Fictional sample data · Not saved**.
 
 ## Later visits
 
-Sign in with email and password, then type the current 6-digit code. You do not scan the QR code again unless an administrator has removed the factor.
+1. Open the practice address in Chrome.
+2. Sign in with the email and password.
+3. Type the current 6-digit code.
 
-Tap **Sign out** when you are done, especially on a shared computer. Sign-out closes the command center on that device. It does not delete the authenticator on the phone.
+You enter the setup key again only after an administrator removes the authenticator.
+
+Tap **Sign out** when you are done. Sign-out closes the command center in this browser. It leaves the authenticator app installed.
 
 ## Password reset
 
+Do this after the Supabase addresses in [phase-3-pages.md](phase-3-pages.md) match the practice address.
+
 1. On the sign-in screen, tap **Forgot password**.
-2. Use the owner email.
-3. Open the link on this computer. It should land on the local password page, not on the live website.
-4. Choose a new password of at least 8 characters.
-5. The authenticator code is still required after that.
+2. Enter the owner email.
+3. Open the email on this phone.
+4. If the link opens somewhere other than Chrome, copy it and paste it into the same Chrome window that asked for the reset.
+5. Choose a new password of at least 8 characters.
+6. The authenticator code is still required after that.
 
-If the email link opens the live website, stop. Do not enter the password there. In the practice project, set **Site URL** to `http://localhost:5173` and add `http://localhost:5173/auth/update-password` to **Redirect URLs**. Remove any live-site address from that list.
+If the link opens `kimmysdelivery.com`, stop. Do not type the password there. The practice project's **Site URL** has to be changed to the practice address, and then you request a new link.
 
-## Optional: open the preview on the phone
+## Replaced phone or deleted authenticator app
 
-This is still not a deployment. Skip it if the computer screen is enough.
+There is no skip button.
 
-1. Keep the phone and the computer on the same home Wi-Fi.
-2. Stop the preview, then start it with:
+1. In Chrome, open the Supabase dashboard for **kimmys-hub-practice**.
+2. Go to **Authentication → Users** and open the owner account.
+3. Remove the old authenticator.
+4. Sign in on the practice site again and enroll with the setup key.
 
-```bash
-npm run dev -- --host
-```
+A new password does not remove the authenticator.
 
-3. Vite prints a `Network` address such as `http://192.168.x.x:5173`. Open that address in the phone's browser.
-4. If you want password reset to open on the phone, add that exact `http://192.168.x.x:5173/auth/update-password` address to the practice project's redirect allow list.
-5. Do not forward port 5173 on the router. Do not use the live domain.
+## Try the practice screens
 
-The phone can scan a QR code that is on the same phone only if you use the setup key instead. Scanning is easier when the QR code is on the computer and the authenticator is on the phone.
+Every name, phone, address, and dollar amount is fictional.
 
-## Replaced phone or deleted app
-
-The command center will not skip the code.
-
-1. Sign in to the Supabase dashboard for **kimmys-hub-practice**.
-2. Open **Authentication → Users** and the owner account.
-3. Remove the old authenticator factor.
-4. Sign in on the command center again.
-5. Enroll the new phone with the steps above.
-
-Password reset alone does not turn the authenticator off.
+- **Orders:** tap **Create sample order**, save it, search for the fictional name, and tap **Advance** or **Mark completed**. Delivered stays open. Completed closes the order.
+- **Quotes:** open **Edit fee rules** and change the base fee. Merchandise stays separate from the service fee.
+- **Deliveries:** tap **Later** on the first stop, then **Previous day** and **Next day**.
+- **Home and Reports:** after you complete an order, the practice service-fee figures follow that change. The sample-week chart stays labeled illustrative.
+- **Refresh:** the original sample orders come back. They are not saved.

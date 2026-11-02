@@ -20,6 +20,10 @@ export function jwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+function isProjectPath(pathname: string): boolean {
+  return pathname === '/' || pathname === '/rest/v1' || pathname === '/rest/v1/'
+}
+
 function classifyKey(key: string): 'publishable' | 'secret' | 'rejected' {
   if (key.startsWith('sb_secret_') || key.includes('service_role')) return 'secret'
 
@@ -56,7 +60,9 @@ export function readSupabasePublicConfig(env: {
   }
 
   if (parsed.protocol !== 'https:') return { ok: false, problem: 'invalid-url' }
-  if (parsed.pathname !== '/' || parsed.search || parsed.hash) {
+  // The dashboard sometimes copies the REST address, with /rest/v1/ on the end.
+  // The app connects to the project address and ignores that ending.
+  if (parsed.search || parsed.hash || !isProjectPath(parsed.pathname)) {
     return { ok: false, problem: 'invalid-url' }
   }
 

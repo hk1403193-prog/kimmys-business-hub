@@ -9,7 +9,7 @@ export type SecretFinding = {
 }
 
 const TEXT = /\.(ts|tsx|js|mjs|cjs|css|html|sql|md|json|svg|txt|example)$/i
-const SKIP = new Set(['node_modules', '.git', 'coverage', '.vite'])
+const SKIP = new Set(['node_modules', '.git', 'coverage', '.vite', 'dist'])
 
 function lineHasServiceRoleToken(line: string): boolean {
   const matches = line.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g)
