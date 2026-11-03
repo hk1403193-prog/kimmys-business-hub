@@ -4,6 +4,7 @@ import { formatMoney } from '../lib/money'
 import { sections, type SectionId } from '../sections'
 import { useOperations } from '../state/OperationsProvider'
 import { Notice } from '../components/Notice'
+import { OrderSyncNotice } from '../components/OrderSyncNotice'
 import { PracticeStatusPill } from '../components/PracticeStatusPill'
 import { RevenueNote } from '../components/RevenueNote'
 import { SectionButton } from '../components/SectionButton'
@@ -30,11 +31,12 @@ export function DashboardView({ onOpen }: DashboardViewProps) {
         title="Daily overview"
       >
         Kimmy&apos;s Personal Concierge &amp; Delivery. Totals follow the
-        fictional orders in this session.
+        fictional orders.
       </SectionIntro>
+      <OrderSyncNotice />
       <Notice>
-        This private command center resets when you refresh. Your live customer
-        website was left as it is.
+        Fee rules, the day plan, and the switches still reset when you refresh.
+        The live customer website was left as it is. Payments stay disconnected.
       </Notice>
       <section className="hero" aria-label="Sample day summary">
         <p className="eyebrow">Remaining workload</p>

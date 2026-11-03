@@ -3,11 +3,12 @@ import { SectionButton } from './SectionButton'
 
 type MoreSheetProps = {
   section: SectionId
+  sampleStrip: string
   onOpen: (id: SectionId) => void
   onClose: () => void
 }
 
-export function MoreSheet({ section, onOpen, onClose }: MoreSheetProps) {
+export function MoreSheet({ section, sampleStrip, onOpen, onClose }: MoreSheetProps) {
   return (
     <div
       className="sheet"
@@ -15,9 +16,7 @@ export function MoreSheet({ section, onOpen, onClose }: MoreSheetProps) {
       aria-modal="true"
       aria-labelledby="all-sections-title"
     >
-      <p className="sample-strip">
-        Fictional sample data · Not saved
-      </p>
+      <p className="sample-strip">{sampleStrip}</p>
       <div className="wrap sheet-body">
         <button type="button" className="btn btn-secondary" onClick={onClose}>
           Close

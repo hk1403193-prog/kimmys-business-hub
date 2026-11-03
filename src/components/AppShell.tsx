@@ -8,6 +8,7 @@ type AppShellProps = {
   section: SectionId
   moreOpen: boolean
   email: string | null
+  sampleStrip: string
   onSignOut: () => void
   onOpen: (id: SectionId) => void
   onMore: () => void
@@ -19,6 +20,7 @@ export function AppShell({
   section,
   moreOpen,
   email,
+  sampleStrip,
   onSignOut,
   onOpen,
   onMore,
@@ -31,9 +33,7 @@ export function AppShell({
         <a className="skip" href="#content">
           Skip to content
         </a>
-        <p className="sample-strip">
-          Fictional sample data · Not saved
-        </p>
+        <p className="sample-strip">{sampleStrip}</p>
         <div className="session-bar">
           <p>Owner signed in{email ? ` · ${email}` : ''}</p>
           <button className="btn btn-secondary" type="button" onClick={onSignOut}>
@@ -52,7 +52,12 @@ export function AppShell({
         />
       </div>
       {moreOpen ? (
-        <MoreSheet section={section} onOpen={onOpen} onClose={onCloseMore} />
+        <MoreSheet
+          section={section}
+          sampleStrip={sampleStrip}
+          onOpen={onOpen}
+          onClose={onCloseMore}
+        />
       ) : null}
     </>
   )

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from './auth/AuthProvider'
 import { AppShell } from './components/AppShell'
+import { sampleStripLabel } from './state/orderSync'
+import { useOperations } from './state/OperationsProvider'
 import { isSectionId, type SectionId } from './sections'
 import { CustomersView } from './views/CustomersView'
 import { DashboardView } from './views/DashboardView'
@@ -20,6 +22,7 @@ function readSection(): SectionId {
 
 export function App() {
   const { email, signOut } = useAuth()
+  const { orderSync } = useOperations()
   const [section, setSection] = useState<SectionId>(readSection)
   const [moreOpen, setMoreOpen] = useState(false)
 
@@ -47,6 +50,7 @@ export function App() {
       section={section}
       moreOpen={moreOpen}
       email={email}
+      sampleStrip={sampleStripLabel(orderSync)}
       onSignOut={() => void signOut()}
       onOpen={openSection}
       onMore={() => setMoreOpen(true)}

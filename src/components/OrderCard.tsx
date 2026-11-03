@@ -13,6 +13,8 @@ import { practiceStatuses } from '../domain/types'
 import type { Workload } from '../domain/workload'
 import type { SampleToggle } from '../sample/types'
 import { formatMoney } from '../lib/money'
+import type { OrderWriteResult } from '../state/orderSync'
+import { Notice } from './Notice'
 import { OrderForm } from './OrderForm'
 import { PracticeStatusPill, statusMeaning } from './PracticeStatusPill'
 import { QuoteBreakdown } from './QuoteBreakdown'
@@ -24,8 +26,9 @@ type OrderCardProps = {
   today: string
   rules: PricingRules
   services: SampleToggle[]
-  onSave: (draft: OrderDraft) => void
-  onStatus: (status: PracticeStatus) => void
+  busy?: boolean
+  onSave: (draft: OrderDraft) => Promise<OrderWriteResult>
+  onStatus: (status: PracticeStatus) => Promise<OrderWriteResult>
 }
 
 export function OrderCard({
@@ -35,13 +38,23 @@ export function OrderCard({
   today,
   rules,
   services,
+  busy = false,
   onSave,
   onStatus,
 }: OrderCardProps) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<OrderDraft>(() => draftFromOrder(order))
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [actionOk, setActionOk] = useState(false)
   const upcoming = nextStatus(order.status)
+
+  async function changeStatus(status: PracticeStatus) {
+    if (busy) return
+    const result = await onStatus(status)
+    setActionMessage(result.message)
+    setActionOk(result.ok)
+  }
 
   return (
     <li className="card">
@@ -116,21 +129,26 @@ export function OrderCard({
             leaves the order open. Mark completed closes it and removes it
             from upcoming deliveries.
           </p>
+          {actionMessage ? (
+            <Notice tone={actionOk ? 'ok' : 'error'}>{actionMessage}</Notice>
+          ) : null}
           <div className="stack">
             {upcoming ? (
               <button
                 type="button"
                 className="btn btn-primary"
-                onClick={() => onStatus(upcoming)}
+                disabled={busy}
+                onClick={() => void changeStatus(upcoming)}
               >
-                Advance to {upcoming}
+                {busy ? 'Saving…' : `Advance to ${upcoming}`}
               </button>
             ) : null}
             {order.status !== 'Completed' ? (
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => onStatus('Completed')}
+                disabled={busy}
+                onClick={() => void changeStatus('Completed')}
               >
                 Mark completed
               </button>
@@ -139,7 +157,8 @@ export function OrderCard({
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => onStatus('Canceled')}
+                disabled={busy}
+                onClick={() => void changeStatus('Canceled')}
               >
                 Mark canceled
               </button>
@@ -156,7 +175,8 @@ export function OrderCard({
                     order.status === status ? 'btn btn-primary' : 'btn btn-secondary'
                   }
                   aria-pressed={order.status === status}
-                  onClick={() => onStatus(status)}
+                  disabled={busy || order.status === status}
+                  onClick={() => void changeStatus(status)}
                 >
                   {status}
                 </button>
@@ -168,12 +188,16 @@ export function OrderCard({
               draft={draft}
               rules={rules}
               services={services}
+              busy={busy}
               submitLabel="Save sample order"
               onChange={setDraft}
               onCancel={() => setEditing(false)}
               onSubmit={() => {
-                onSave(draft)
-                setEditing(false)
+                void onSave(draft).then((result) => {
+                  setActionMessage(result.message)
+                  setActionOk(result.ok)
+                  if (result.ok) setEditing(false)
+                })
               }}
             />
           ) : (

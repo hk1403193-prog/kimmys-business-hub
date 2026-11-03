@@ -16,7 +16,7 @@ The same black, hot pink, and leopard command center, with fictional orders that
 4. **Dashboard.** New, active, and completed counts, expected and completed service revenue, remaining workload, the full day's workload, and upcoming deliveries update when the sample orders change.
 5. **Customers, Money, Reports, and Settings.** These stay connected to the same practice session. The old sample-week chart, totals, and average are labeled illustrative. They are not payments received.
 
-Refreshing the page puts the original practice data back. Nothing is stored.
+Fee rules, the day plan, and the switches stay in this browser until you refresh. Practice orders stay saved after you run the Phase 3.1 SQL in the practice project. Until that SQL is run, a refresh puts the original sample orders back.
 
 Order statuses are: New, Quoted, Awaiting Payment, Confirmed, Shopping, Picked Up, Out for Delivery, Delivered, Completed, and Canceled.
 
@@ -34,11 +34,11 @@ The practice site is not published yet. After a later approved deployment, the p
 
 On the phone, after sign-in and the authenticator code:
 
-- **Orders:** tap Create sample order, save it, search for the fictional name, and tap Advance or Mark completed. Delivered stays open. Completed closes the order and removes it from upcoming deliveries.
+- **Orders:** tap Create sample order, keep the fictional name and 555 phone, and save it. Search for the fictional name, then tap Advance or Mark completed. Delivered stays open. Completed closes the order. After the Phase 3.1 SQL is installed, refresh the page and sign in again. The fictional order is still there.
 - **Quotes:** open Edit fee rules, change the base fee, and watch the service fee change. Merchandise stays separate. A manual adjustment that would drop the service fee below zero is refused.
 - **Deliveries:** tap Later on the first stop, then Previous day and Next day. The planning minutes are a workload guess. Remaining workload and the full day are both shown. Closed orders for that day sit under the open stops.
 - **Dashboard and Reports:** go back to Home after completing an order. Expected service revenue, completed service revenue, and the remaining workload follow the change. The sample-week chart stays labeled illustrative.
-- **Refresh:** the original sample orders return.
+- **Refresh:** saved practice orders stay after the Phase 3.1 SQL is installed. Fee rules, the stop order, and the switches still reset. If that SQL has not been run, the pink bar says **Not saved** and the original samples return.
 
 ## What stays fictional
 
@@ -51,17 +51,21 @@ Every customer, phone, address, order, fee, and dollar amount is practice data. 
 - A published practice site, a Cloudflare project, or a paid service
 - Secret keys
 
-Owner sign-in uses the practice Supabase project when a practice build includes the public project address and the publishable key. Practice orders on the screens still live in the phone browser until you refresh. A separate fictional lock table is defined in SQL for you to run yourself in the practice project. It is not customer data.
+Owner sign-in uses the practice Supabase project when a practice build includes the public project address and the publishable key. Practice orders can be saved in that same project after you run the Phase 3.1 SQL yourself. They are fictional rows for the verified owner. They are not customer records. The older fictional lock table is separate, and its policies are unchanged.
 
 ## Phase 3
 
 Phase 3.0 adds owner sign-in around the same command center. The screens stay closed until the practice account is the owner and an authenticator code has been accepted.
 
-The Android steps are in [docs/phase-3-android.md](docs/phase-3-android.md). The owner role, authenticator rules, practice database lock, and security review are in [docs/phase-3-owner-auth.md](docs/phase-3-owner-auth.md). The future Cloudflare Pages address, build settings, and Supabase redirect lines are in [docs/phase-3-pages.md](docs/phase-3-pages.md).
+Phase 3.1 saves fictional practice orders for the verified owner. The owner can create an order, open it again after a refresh, change it, and close it. The pink bar says **Saved for this owner** when the save is working. A normal name, a phone that is not a 555 number, an email address, or the live website is refused and is not stored.
+
+The SQL for that table is in `supabase/migrations/20261102180000_practice_orders.sql`. This repository does not run it. Run the practice lock SQL first, then this file, in **kimmys-hub-practice** only. The steps are in [docs/phase-3-owner-auth.md](docs/phase-3-owner-auth.md). Safe phone checks are in [docs/phase-3-android.md](docs/phase-3-android.md).
+
+The Android steps for sign-in are in [docs/phase-3-android.md](docs/phase-3-android.md). The owner role, authenticator rules, practice database lock, and security review are in [docs/phase-3-owner-auth.md](docs/phase-3-owner-auth.md). The future Cloudflare Pages address, build settings, and Supabase redirect lines are in [docs/phase-3-pages.md](docs/phase-3-pages.md). Nothing in this phase is deployed, and Cloudflare and DNS are unchanged.
 
 The two public build values use the names in `.env.example`. They are not committed. Without them, the site shows setup instructions and does not open the command center.
 
-Password reset does not turn off the authenticator. This app does not edit account JSON, and it does not contain the Supabase secret key. Direct links such as the password page and `/orders` are listed in `public/_redirects` so a static practice host can open the app. Customer accounts, saved business records, payments, and any change involving the live website wait for a later approval.
+Password reset does not turn off the authenticator. This app does not edit account JSON, and it does not contain the Supabase secret key. Direct links such as the password page and `/orders` are listed in `public/_redirects` so a static practice host can open the app. Customer accounts, payments, and any change involving the live website wait for a later approval. The only saved records in this phase are fictional practice orders.
 
 ## Checks used to prepare a build
 
@@ -86,12 +90,12 @@ src/App.tsx                Chooses the open section, after sign-in
 src/auth/                  Owner sign-in, authenticator, and access checks
 src/styles.css             Colors, layout, and phone styling
 src/domain/                Practice orders, quotes, workload, and the day plan
-src/state/                 In-memory session shared by every screen
+src/state/                 Practice session, including saved fictional orders
 src/components/            Shared header, buttons, and forms
 src/views/                 One file for each section
 src/sample/                Original Phase 1 practice figures
 src/lib/                   Helpers kept from Phase 1
-supabase/migrations/       Practice lock SQL, run by you in the practice project
+supabase/migrations/       Practice lock and practice-order SQL, run by you
 docs/                      Phone guide, owner setup, and the future practice site
 ```
 

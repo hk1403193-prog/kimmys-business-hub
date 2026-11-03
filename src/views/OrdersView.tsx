@@ -9,12 +9,14 @@ import { useOperations } from '../state/OperationsProvider'
 import { Notice } from '../components/Notice'
 import { OrderCard } from '../components/OrderCard'
 import { OrderForm } from '../components/OrderForm'
+import { OrderSyncNotice } from '../components/OrderSyncNotice'
 import { SectionIntro } from '../components/SectionIntro'
 import { StatusGuide } from '../components/StatusGuide'
 
 export function OrdersView() {
   const {
     state,
+    orderSync,
     createOrder,
     updateOrder,
     setStatus,
@@ -26,7 +28,10 @@ export function OrdersView() {
   const [draft, setDraft] = useState<OrderDraft>(() =>
     blankDraft(state.today, state.practice),
   )
+  const [createMessage, setCreateMessage] = useState<string | null>(null)
+  const [createOk, setCreateOk] = useState(false)
   const visible = searchOrders(state.orders, query, filter)
+  const busy = orderSync.phase === 'loading' || orderSync.phase === 'saving'
 
   useEffect(() => {
     if (!state.draftArmed) {
@@ -41,12 +46,13 @@ export function OrdersView() {
   return (
     <div className="stack">
       <SectionIntro title="Orders">
-        Create and update fictional orders. Status changes, lists, and pickup
-        details stay in this practice session until you refresh.
+        Create, update, and close fictional orders. Saved orders stay after a
+        refresh and the next sign-in.
       </SectionIntro>
+      <OrderSyncNotice />
       <Notice>
         Every name and address here is invented. Nothing is sent to your live
-        website.
+        website, and payments stay disconnected.
       </Notice>
       <StatusGuide />
       <label className="field">
@@ -78,13 +84,23 @@ export function OrdersView() {
             draft={draft}
             rules={state.rules}
             services={state.services}
+            busy={busy}
+            notice={createMessage}
+            noticeTone={createOk ? 'ok' : 'error'}
             submitLabel="Create sample order"
             onChange={setDraft}
-            onCancel={() => setCreating(false)}
-            onSubmit={() => {
-              createOrder(draft)
+            onCancel={() => {
               setCreating(false)
-              setDraft(blankDraft(state.today, state.practice))
+              setCreateMessage(null)
+            }}
+            onSubmit={() => {
+              void createOrder(draft).then((result) => {
+                setCreateMessage(result.message)
+                setCreateOk(result.ok)
+                if (!result.ok) return
+                setCreating(false)
+                setDraft(blankDraft(state.today, state.practice))
+              })
             }}
           />
         </section>
@@ -92,16 +108,22 @@ export function OrdersView() {
         <button
           type="button"
           className="btn btn-primary"
+          disabled={busy}
           onClick={() => {
             setDraft(blankDraft(state.today, state.practice))
+            setCreateMessage(null)
             setCreating(true)
           }}
         >
-          Create sample order
+          {orderSync.phase === 'loading' ? 'Loading…' : busy ? 'Saving…' : 'Create sample order'}
         </button>
       )}
-      {visible.length === 0 ? (
-        <p className="card-meta">No sample orders match.</p>
+      {orderSync.phase === 'loading' ? null : visible.length === 0 ? (
+        <p className="card-meta">
+          {state.orders.length === 0 && query.trim() === '' && filter === 'All'
+            ? 'No practice orders yet.'
+            : 'No sample orders match.'}
+        </p>
       ) : (
         <ul className="card-list">
           {visible.map((order) => (
@@ -113,6 +135,7 @@ export function OrdersView() {
               today={state.today}
               rules={state.rules}
               services={state.services}
+              busy={busy}
               onSave={(next) => updateOrder(order.id, next)}
               onStatus={(status) => setStatus(order.id, status)}
             />

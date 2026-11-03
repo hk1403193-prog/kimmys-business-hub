@@ -13,7 +13,8 @@ export function CustomersView() {
   return (
     <div className="stack">
       <SectionIntro title="Customers">
-        Practice customers come from the fictional orders in this session.
+        Practice customers come from the fictional orders. Real customer
+        records are not stored.
       </SectionIntro>
       <Notice>
         No customer accounts exist. This list cannot reach your live website.

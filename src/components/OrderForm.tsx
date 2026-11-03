@@ -5,6 +5,7 @@ import { acceptScenario, calculateServiceQuote } from '../domain/pricing'
 import type { OrderDraft, PricingRules } from '../domain/types'
 import { deliveryWindows, type Priority } from '../domain/types'
 import type { SampleToggle } from '../sample/types'
+import { Notice } from './Notice'
 import { Stepper } from './Stepper'
 
 type OrderFormProps = {
@@ -12,6 +13,9 @@ type OrderFormProps = {
   rules: PricingRules
   services: SampleToggle[]
   submitLabel: string
+  busy?: boolean
+  notice?: string | null
+  noticeTone?: 'ok' | 'error'
   onChange: (draft: OrderDraft) => void
   onSubmit: () => void
   onCancel: () => void
@@ -24,6 +28,9 @@ export function OrderForm({
   rules,
   services,
   submitLabel,
+  busy = false,
+  notice = null,
+  noticeTone = 'error',
   onChange,
   onSubmit,
   onCancel,
@@ -48,6 +55,7 @@ export function OrderForm({
       autoComplete="off"
       onSubmit={(event) => {
         event.preventDefault()
+        if (busy) return
         onSubmit()
       }}
     >
@@ -60,6 +68,10 @@ export function OrderForm({
             onChange({ ...draft, customer: event.target.value })
           }
         />
+        <p className="card-meta">
+          Include Sample, Example, Preview, Demo, Practice, or Placeholder.
+          Real names are refused.
+        </p>
       </label>
       <label className="field">
         <span>Practice phone</span>
@@ -69,6 +81,7 @@ export function OrderForm({
           autoComplete="off"
           onChange={(event) => onChange({ ...draft, phone: event.target.value })}
         />
+        <p className="card-meta">Use a 555 number, such as (555) 010-0199.</p>
       </label>
       <label className="field">
         <span>Service</span>
@@ -152,6 +165,7 @@ export function OrderForm({
             onChange({ ...draft, pickupPlace: event.target.value })
           }
         />
+        <p className="card-meta">Practice places only, such as Sample Corner Market.</p>
       </label>
       <label className="field">
         <span>Delivery place</span>
@@ -162,6 +176,7 @@ export function OrderForm({
             onChange({ ...draft, deliveryPlace: event.target.value })
           }
         />
+        <p className="card-meta">Practice places only, such as Preview Lane.</p>
       </label>
       <label className="field">
         <span>Shopping list</span>
@@ -182,6 +197,7 @@ export function OrderForm({
             onChange({ ...draft, instructions: event.target.value })
           }
         />
+        <p className="card-meta">Keep the word Fictional in the instructions.</p>
       </label>
       <details className="fold">
         <summary>Practice quote for this order</summary>
@@ -360,10 +376,11 @@ export function OrderForm({
           </button>
         </div>
       </details>
-      <button type="submit" className="btn btn-primary">
-        {submitLabel}
+      {notice ? <Notice tone={noticeTone}>{notice}</Notice> : null}
+      <button type="submit" className="btn btn-primary" disabled={busy}>
+        {busy ? 'Saving…' : submitLabel}
       </button>
-      <button type="button" className="btn btn-secondary" onClick={onCancel}>
+      <button type="button" className="btn btn-secondary" disabled={busy} onClick={onCancel}>
         Close
       </button>
     </form>
