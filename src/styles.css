@@ -198,6 +198,19 @@ h2 {
   color: #ffd6e8;
 }
 
+.notice-ok {
+  background: rgba(255, 45, 135, 0.24);
+  color: #fff7fa;
+  font-weight: 800;
+}
+
+.notice-error {
+  background: #1a0610;
+  border-color: var(--pink);
+  color: #ffe4f1;
+  font-weight: 800;
+}
+
 .hero,
 .card,
 .stat,

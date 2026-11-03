@@ -9,7 +9,7 @@ The command center stays closed until all of these are true:
 3. That account's **app metadata** role is `owner`.
 4. An authenticator app has verified this sign-in (assurance level `aal2`).
 
-Practice orders on the screens are fictional and disappear when you refresh. The optional database table below is also fictional. It is not a customer list.
+Practice orders are fictional. After you run the Phase 3.1 SQL below, the verified owner can save them. Until that SQL is run, they disappear when you refresh. Neither the orders table nor the older notes table is a customer list.
 
 Nothing in this phase is deployed. Review it before any merge or publication. Keep it off `https://kimmysdelivery.com`.
 
@@ -147,7 +147,7 @@ This repository does not run that file.
 
 When you choose to install it, open **SQL Editor** in the practice project, paste the file, and run it there. Do not run it in any other project.
 
-There is no customer table. The orders on the screens stay in the browser until you refresh.
+There is no customer table. Practice orders stay in the browser until you run the separate SQL in section 8. That file does not change this notes table or its policies.
 
 After you are signed in and the authenticator has been accepted, **Settings → Check protected table** asks the practice project for that table. It shows a count. It does not print note text on the screen. If the SQL has not been run, the screen says the lock is not installed yet. The rest of the practice screens still work.
 
@@ -180,9 +180,11 @@ This review covers the owner role, authenticator enrollment, and the practice-ta
 
 **Authenticator.** The command center opens only at assurance level `aal2`. Before any authenticator exists, the app shows enrollment. After one is verified, it asks for the current code. There is no button that skips the code. Saving a new password does not remove a verified authenticator. The dev-only layout preview is not included in a production build.
 
-**Practice table.** The SQL turns on row level security, forces it, removes `anon` and `public` privileges, and allows a row only for an authenticated owner at `aal2`. Notes must start with `FICTIONAL:`. The service-role key would bypass the policies, so it is kept out of the app. The table does nothing until you run the SQL yourself.
+**Practice notes table.** That SQL turns on row level security, forces it, removes `anon` and `public` privileges, and allows a row only for an authenticated owner at `aal2`. Notes must start with `FICTIONAL:`. The service-role key would bypass the policies, so it is kept out of the app. The table does nothing until you run the SQL yourself. Phase 3.1 does not change those policies.
 
-**What the sign-in gate covers.** It closes the screens during a normal visit. The fictional sample orders are part of the app download, and a refresh puts the original sample back. They are not a private customer database. Real customer records are not in this app.
+**Practice orders table.** The separate SQL in section 8 uses the same owner function, forces row level security, and refuses a row that is not marked fictional. The app sends orders only after the owner check. It does not contain the secret key. This review did not run that SQL.
+
+**What the sign-in gate covers.** It closes the screens during a normal visit. Real customer records are not in this app. Fictional practice orders are saved only after you run the Phase 3.1 SQL, and only a verified owner can read or write them. Until that SQL is run, a refresh puts the original samples back.
 
 **Password recovery.** The link has to come back to `/auth/update-password` on the practice address, in the same Chrome window, because the reset proof is stored in that browser. `public/_redirects` is what lets that address open the app on Pages instead of a missing-page error. The same file covers a direct visit to `/orders` or the other sections.
 
@@ -192,3 +194,39 @@ This review covers the owner role, authenticator enrollment, and the practice-ta
 - Payments, text messages, and maps
 - A Cloudflare project, a deployment, and any paid service
 - Secret keys and service-role keys
+
+## 8. Saved practice orders
+
+The file `supabase/migrations/20261102180000_practice_orders.sql` creates one table, `practice_orders`.
+
+This repository does not run that file. Do not run it from the app, from a terminal connection, or in any project except **kimmys-hub-practice**.
+
+Run section 4 first if you have not already. The orders file stops if `public.is_verified_owner()` is missing. It does not replace that function, and it does not change `practice_owner_notes` or the four notes policies.
+
+### What the SQL does
+
+- Row level security is on, and forced, so the table owner does not skip it.
+- `anon` has no privileges. `public` has no privileges.
+- The signed-in role can select, insert, and update. It cannot delete.
+- A row can be read or written only when `public.is_verified_owner()` is true and the row belongs to that account. That function is the existing check: authenticated, authenticator level `aal2`, and app metadata role `owner`.
+- The label has to start with `FICTIONAL:`.
+- The customer words have to include Sample, Example, Preview, Fictional, Demo, Practice, or Placeholder.
+- The phone has to look like `(555) 010-0199`.
+- Places have to include a practice word such as Practice, Sample, Demo, Preview, or Placeholder.
+- Instructions, when present, have to include the word fictional.
+- The stored text cannot contain an email address or `kimmysdelivery`.
+- Completed and canceled orders are marked closed. Delivered stays open. Closed orders remain in the table so the history is still there after a refresh.
+- The SQL does not read user metadata.
+
+The Supabase secret key still bypasses these policies. That key stays in the dashboard. It is not in this app.
+
+### Run it yourself
+
+1. Open the SQL editor in **kimmys-hub-practice** only.
+2. If the practice lock from section 4 is not installed, paste `supabase/migrations/20261101120000_practice_owner_lock.sql` and run it there.
+3. Paste `supabase/migrations/20261102180000_practice_orders.sql` and run it there.
+4. If the editor says `public.is_verified_owner()` is missing, run the lock file, then run the orders file again.
+
+Do not paste either file into another project. Do not add real customer names, phones, or addresses as a test row. The screen creates the fictional rows after you sign in.
+
+Fee rules, the delivery stop order, hours, services, and areas still reset on refresh. Only the fictional orders stay saved. There is no payment column and no connection to the live website.

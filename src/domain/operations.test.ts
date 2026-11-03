@@ -418,6 +418,27 @@ describe('refresh', () => {
   })
 })
 
+describe('saved order replacement', () => {
+  it('replaces the screen list without resetting the other practice settings', () => {
+    const state = createInitialState(today)
+    const replaced = operationsReducer(state, { type: 'replace-orders', orders: [] })
+    expect(replaced.orders).toEqual([])
+    expect(replaced.rules).toEqual(state.rules)
+    expect(replaced.hours).toEqual(state.hours)
+
+    const committed = operationsReducer(replaced, {
+      type: 'commit-orders',
+      orders: state.orders.slice(0, 1),
+      feeNotice: 'Practice fee kept.',
+      clearDraft: true,
+    })
+    expect(committed.orders.map((order) => order.id)).toEqual([state.orders[0]?.id])
+    expect(committed.feeNotice).toBe('Practice fee kept.')
+    expect(committed.draftArmed).toBe(false)
+    expect(committed.hours).toEqual(state.hours)
+  })
+})
+
 describe('workload calculations', () => {
   it('uses editable planning rules and does not invent a drive time', () => {
     const state = createInitialState(today)

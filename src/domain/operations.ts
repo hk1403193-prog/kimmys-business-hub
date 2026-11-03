@@ -39,6 +39,13 @@ export type OperationsAction =
   | { type: 'toggle-hours'; day: string }
   | { type: 'toggle-service'; id: string }
   | { type: 'toggle-area'; id: string }
+  | { type: 'replace-orders'; orders: PracticeOrder[] }
+  | {
+      type: 'commit-orders'
+      orders: PracticeOrder[]
+      feeNotice: string | null
+      clearDraft: boolean
+    }
 
 export function createInitialState(today: string): OperationsState {
   const settings = cloneSettings()
@@ -202,6 +209,15 @@ export function operationsReducer(
         areas: state.areas.map((item) =>
           item.id === action.id ? { ...item, on: !item.on } : item,
         ),
+      }
+    case 'replace-orders':
+      return { ...state, orders: action.orders }
+    case 'commit-orders':
+      return {
+        ...state,
+        orders: action.orders,
+        feeNotice: action.feeNotice,
+        draftArmed: action.clearDraft ? false : state.draftArmed,
       }
   }
 }

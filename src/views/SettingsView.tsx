@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { notesStatusMessage } from '../auth/notes'
 import { useOperations } from '../state/OperationsProvider'
 import { Notice } from '../components/Notice'
+import { OrderSyncNotice } from '../components/OrderSyncNotice'
 import { SectionIntro } from '../components/SectionIntro'
 import { SwitchRow } from '../components/SwitchRow'
 
@@ -47,6 +48,7 @@ export function SettingsView() {
           <p className="card-body">
             This checks the fictional practice-notes table. It is allowed only
             for the verified owner. Customer records are not stored here.
+            Practice orders use a separate table. This notes check is unchanged.
           </p>
           <button
             className="btn btn-secondary"
@@ -58,6 +60,7 @@ export function SettingsView() {
           </button>
           {lockMessage ? <p className="card-body">{lockMessage}</p> : null}
         </article>
+        <OrderSyncNotice />
       </section>
       <section className="stack" aria-labelledby="hours-title">
         <h2 id="hours-title">Hours</h2>
